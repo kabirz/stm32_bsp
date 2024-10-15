@@ -6,7 +6,7 @@
     "configurations": [
         {
             "cwd": "${workspaceFolder}",
-            "executable": "build/Debug/uart_led.elf",
+            "executable": "build/Debug/${workspaceFolderBasename}.elf",
             "name": "Debug with PyOCD",
             "request": "launch",
             "type": "cortex-debug",
@@ -14,6 +14,7 @@
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none",
             "gdbPath": "gdb-multiarch",
+            "svdFile": "${workspaceFolder}/debug/STM32F103.svd",
             "servertype": "pyocd"
         },
     ]

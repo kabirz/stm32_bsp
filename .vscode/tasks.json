@@ -14,7 +14,7 @@
 
         },
         {
-            "label": "flash",
+            "label": "cargo-flash",
             "type": "shell",
             "dependsOn": "build",
             "command": "cargo-flash",
@@ -22,7 +22,19 @@
                 "--chip",
                 "STM32F103C8",
                 "--path",
-                "build/Debug/uart_led.elf"
+                "build/Debug/${workspaceFolderBasename}.elf"
+            ]
+        },
+        {
+            "label": "pyocd-flash",
+            "type": "shell",
+            "dependsOn": "build",
+            "command": "pyocd",
+            "args": [
+                "load",
+                "-t",
+                "STM32F103C8",
+                "build/Debug/${workspaceFolderBasename}.elf"
             ]
         }
     ]
