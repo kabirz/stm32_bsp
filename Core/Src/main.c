@@ -50,7 +50,7 @@ DMA_HandleTypeDef hdma_i2c1_tx;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-static const uint8_t message[] = "Hello, STM32";
+static const uint8_t board_str[] = "STM32F103CBT6";
 static const char test_json[] = "{\"name\": \"kabirz\", \"age\": 34}";
 static cJSON *root;
 /* USER CODE END PV */
@@ -134,7 +134,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  printf("System clock: %dMHz\n", SystemCoreClock/1000000);
+  printf("BOARD: %s, System clock: %luMHz\n", board_str, SystemCoreClock/1000000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -142,8 +142,7 @@ int main(void)
   while (1)
   {
     HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    printf("%s\n", message);
-    HAL_Delay(300);
+    HAL_Delay(500);
     load_json();
     /* USER CODE END WHILE */
 
