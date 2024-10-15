@@ -49,12 +49,15 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     cJSON/cJSON.c
+    RTT/SEGGER_RTT.c
+    RTT/SEGGER_RTT_printf.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     cJSON
+    RTT
 )
 
 # Add project symbols (macros)

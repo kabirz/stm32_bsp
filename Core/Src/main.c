@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <SEGGER_RTT.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -135,6 +136,7 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   printf("BOARD: %s, System clock: %luMHz\n", board_str, SystemCoreClock/1000000);
+  SEGGER_RTT_printf(0, "BOARD: %s, System clock: %dMHz\n", board_str, SystemCoreClock/1000000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
