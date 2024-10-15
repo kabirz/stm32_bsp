@@ -14,7 +14,7 @@
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none",
             "gdbPath": "gdb-multiarch",
-            "svdFile": "${workspaceFolder}/debug/STM32F103.svd",
+            "svdFile": "${workspaceFolder}/../debug/STM32F103.svd",
             "servertype": "pyocd"
         },
     ]
