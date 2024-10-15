@@ -21,7 +21,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <cJSON.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +46,9 @@
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+static const uint8_t message[] = "Hello, STM32";
+static const char test_json[] = "{\"name\": \"kabirz\", \"age\": 34}";
+static cJSON *root;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,7 +61,38 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#ifdef __GNUC__
+  #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+  #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
+PUTCHAR_PROTOTYPE
+{
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  return ch;
+}
 
+void load_json(void)
+{
+  cJSON *tmp;
+
+  if (root == NULL) {
+    root = cJSON_Parse(test_json);
+  }
+
+  tmp = cJSON_GetObjectItem(root, "age");
+  if (tmp) {
+    cJSON_SetNumberValue(tmp, tmp->valueint + 1);
+  }
+
+  char *str = cJSON_Print(root);
+  if (str) {
+    printf("data: %s\n", str);
+    free(str);
+  } else {
+    printf("malloc failed\n");
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -98,7 +134,9 @@ int main(void)
   while (1)
   {
     HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    printf("%s\n", message);
     HAL_Delay(300);
+    load_json();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
