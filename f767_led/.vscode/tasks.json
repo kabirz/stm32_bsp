@@ -1,0 +1,41 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build/Debug"
+            ]
+
+        },
+        {
+            "label": "cargo-flash",
+            "type": "shell",
+            "dependsOn": "build",
+            "command": "cargo-flash",
+            "args": [
+                "--chip",
+                "STM32F767IGTx",
+                "--path",
+                "build/Debug/${workspaceFolderBasename}.elf"
+            ]
+        },
+        {
+            "label": "pyocd-flash",
+            "type": "shell",
+            "dependsOn": "build",
+            "command": "pyocd",
+            "args": [
+                "load",
+                "-t",
+                "STM32F767IGTx",
+                "build/Debug/${workspaceFolderBasename}.elf"
+            ]
+        }
+    ]
+}
