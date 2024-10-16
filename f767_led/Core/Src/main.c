@@ -94,6 +94,7 @@ void load_json(void)
 
   char *str = cJSON_Print(root);
   if (str) {
+    HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
     printf("data: %s\n", str);
     free(str);
   } else {
@@ -143,7 +144,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    HAL_GPIO_TogglePin(LED_YELLOW_GPIO_Port, LED_YELLOW_Pin);
     HAL_Delay(500);
     load_json();
     /* USER CODE END WHILE */
