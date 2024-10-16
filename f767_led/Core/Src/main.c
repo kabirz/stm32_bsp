@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "iwdg.h"
 #include "usart.h"
 #include "gpio.h"
@@ -53,6 +54,8 @@
 static const uint8_t board_str[] = "STM32F767IGT6";
 static const char test_json[] = "{\"name\": \"kabirz\", \"age\": 34}";
 static cJSON *root;
+static const uint32_t src_data[4]  __attribute__((aligned(8)))= {0x11223344, 0x56788765, 0x12345678, 0x90231456};
+static uint32_t dest_data[4] __attribute__((aligned(8)));
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,6 +105,16 @@ void load_json(void)
     printf("malloc failed\n");
   }
 }
+
+static int buffer_cmp(const uint32_t *d1, const uint32_t *d2, size_t num)
+{
+  while(num--) {
+    if (*d1++ != *d2++) {
+      return -1;
+    }
+  }
+  return 0;
+}
 /* USER CODE END 0 */
 
 /**
@@ -136,10 +149,21 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
-  MX_IWDG_Init();
+  // MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   printf("BOARD: %s, System clock: %luMHz\n", board_str, SystemCoreClock/1000000);
+  if (HAL_DMA_Start(&hdma_memtomem_dma2_stream0, (uint32_t)src_data, (uint32_t)dest_data, sizeof(dest_data)) == HAL_OK) {
+    HAL_Delay(10);
+    if (buffer_cmp(dest_data, src_data, sizeof(dest_data)/sizeof(uint32_t)) == 0)
+      printf("dma transfor success!\n");
+    else {
+      for (int i = 0; i< 4; i++) {
+        printf("0x%lx, 0x%lx\n", dest_data[i], src_data[i]);
+      }
+    }
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
