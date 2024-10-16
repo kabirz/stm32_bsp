@@ -40,7 +40,8 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define UART_OUTPUT
+#define RTT_OUTPUT
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -75,7 +76,12 @@ static void MX_I2C1_Init(void);
 #endif
 PUTCHAR_PROTOTYPE
 {
+#ifdef UART_OUTPUT
   HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+#endif
+#ifdef RTT_OUTPUT
+  SEGGER_RTT_Write(0, &ch, 1);
+#endif
   return ch;
 }
 

@@ -4,12 +4,34 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "cmake-config",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B",
+                "build/Debug"
+            ]
+
+        },
+        {
+            "label": "cmake-build",
             "type": "shell",
             "command": "cmake",
             "args": [
                 "--build",
                 "build/Debug"
+            ]
+
+        },
+        {
+            "label": "cmake-clean",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build/Debug",
+                "-t",
+                "clean"
             ]
 
         },
@@ -35,6 +57,19 @@
                 "-t",
                 "STM32F103C8",
                 "build/Debug/${workspaceFolderBasename}.elf"
+            ]
+        },
+        {
+            "label": "pyocd-rtt-viewer",
+            "type": "shell",
+            "dependsOn": "build",
+            "command": "pyocd",
+            "args": [
+                "rtt",
+                "-t",
+                "STM32F103C8",
+                "-a",
+                "0x20000b5c"
             ]
         }
     ]
