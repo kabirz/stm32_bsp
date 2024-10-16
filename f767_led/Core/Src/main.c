@@ -21,7 +21,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <cJSON.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <SEGGER_RTT.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define UART_OUTPUT
+#define RTT_OUTPUT
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,7 +49,9 @@
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+static const uint8_t board_str[] = "STM32F767IGT6";
+static const char test_json[] = "{\"name\": \"kabirz\", \"age\": 34}";
+static cJSON *root;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,7 +65,43 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#ifdef __GNUC__
+  #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+  #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
+PUTCHAR_PROTOTYPE
+{
+#ifdef UART_OUTPUT
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+#endif
+#ifdef RTT_OUTPUT
+  SEGGER_RTT_Write(0, &ch, 1);
+#endif
+  return ch;
+}
 
+void load_json(void)
+{
+  cJSON *tmp;
+
+  if (root == NULL) {
+    root = cJSON_Parse(test_json);
+  }
+
+  tmp = cJSON_GetObjectItem(root, "age");
+  if (tmp) {
+    cJSON_SetNumberValue(tmp, tmp->valueint + 1);
+  }
+
+  char *str = cJSON_Print(root);
+  if (str) {
+    printf("data: %s\n", str);
+    free(str);
+  } else {
+    printf("malloc failed\n");
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -95,16 +138,16 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  printf("BOARD: %s, System clock: %luMHz\n", board_str, SystemCoreClock/1000000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_UART_Transmit(&huart1, (uint8_t *)"Hello\n", 6, HAL_MAX_DELAY);
     HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    HAL_Delay(300);
+    HAL_Delay(500);
+    load_json();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
