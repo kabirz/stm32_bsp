@@ -4,14 +4,33 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "cmake-config",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B",
+                "build/Debug"
+            ]
+        },
+        {
+            "label": "cmake-build",
             "type": "shell",
             "command": "cmake",
             "args": [
                 "--build",
                 "build/Debug"
             ]
-
+        },
+        {
+            "label": "cmake-clean",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build/Debug",
+                "-t",
+                "clean"
+            ]
         },
         {
             "label": "cargo-flash",
@@ -23,7 +42,12 @@
                 "STM32F767IGTx",
                 "--path",
                 "build/Debug/${workspaceFolderBasename}.elf"
-            ]
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "pyocd-flash",
@@ -35,6 +59,17 @@
                 "-t",
                 "STM32F767IGTx",
                 "build/Debug/${workspaceFolderBasename}.elf"
+            ]
+        },
+        {
+            "label": "pyocd-rtt-viewer",
+            "type": "shell",
+            "dependsOn": "build",
+            "command": "pyocd",
+            "args": [
+                "rtt",
+                "-t",
+                "STM32F767IGTx"
             ]
         }
     ]
