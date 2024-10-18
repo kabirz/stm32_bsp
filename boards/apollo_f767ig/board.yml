@@ -1,6 +1,6 @@
 board:
-  name: nucleo_f767zi
-  full_name: Nucleo F767ZI
+  name: apollo_f767ig
+  full_name: apollo F767IG
   vendor: st
   socs:
     - name: stm32f767xx

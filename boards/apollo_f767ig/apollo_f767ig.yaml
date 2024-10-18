@@ -1,5 +1,5 @@
-identifier: nucleo_f767zi
-name: ST Nucleo F767ZI
+identifier: apollo_F767ig
+name: apollog f767ig
 type: mcu
 arch: arm
 toolchain:
@@ -7,12 +7,9 @@ toolchain:
   - gnuarmemb
   - xtools
 ram: 512
-flash: 2048
+flash: 1024
 supported:
   - adc
-  - arduino_i2c
-  - arduino_gpio
-  - arduino_spi
   - uart
   - gpio
   - netif:eth
