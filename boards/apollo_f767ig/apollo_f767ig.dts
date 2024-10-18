@@ -62,7 +62,6 @@
 };
 
 &clk_hse {
-	css-enabled;
 	clock-frequency = <DT_FREQ_M(25)>;
 	status = "okay";
 };
@@ -71,7 +70,7 @@
 	div-m = <25>;
 	mul-n = <432>;
 	div-p = <2>;
-	div-q = <9>;
+	div-q = <2>;
 	clocks = <&clk_hse>;
 	status = "okay";
 };
