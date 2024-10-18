@@ -16,7 +16,10 @@ zephyr commit id is `829c03bcdca` in my code.
 ### build for blue pill
 
 ```shell
-    west build -b stm32f103_bluepill/apollo_f767ig ${ZEPHYR_BASE}/samples/basic/blinky -DBOARD_ROOT=`pwd`
+# stm32f103_bluepill
+    west build -b stm32f103_bluepill ${ZEPHYR_BASE}/samples/basic/blinky -DBOARD_ROOT=`pwd`
+# apollo_f767ig 
+    west build -b apollo_f767ig ${ZEPHYR_BASE}/samples/basic/threads -DBOARD_ROOT=`pwd` -DDTS_ROOT=`pwd`
 ```
 
 ### flash
