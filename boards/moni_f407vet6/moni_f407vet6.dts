@@ -140,6 +140,29 @@ zephyr_udc0: &usbotg_fs {
 		spi-max-frequency = <30000000>;
 		size = <0x1000000>;
 		jedec-id = [ef 40 18];
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			boot_partition: partition@0 {
+				label = "bootloader";
+				reg = <0x00000000 DT_SIZE_M(1)>;
+			};
+
+			data_partition: partition@100000 {
+				label = "data";
+				reg = <0x00100000 DT_SIZE_M(12)>;
+			};
+			app_partition: jartition@D00000 {
+				label = "app";
+				reg = <0x00D00000 DT_SIZE_M(2)>;
+			};
+			cfg_partition: partition@F00000 {
+				label = "cfg";
+				reg = <0x00F00000 DT_SIZE_M(1)>;
+			};
+		};
 	};
 };
 
