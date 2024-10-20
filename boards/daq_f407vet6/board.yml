@@ -1,0 +1,6 @@
+board:
+  name: daq_f407vet6
+  full_name: daq STM32 F407VET6 Development Board
+  vendor: others
+  socs:
+    - name: stm32f407xx
