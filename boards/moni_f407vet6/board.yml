@@ -1,0 +1,6 @@
+board:
+  name: moni_f407vet6
+  full_name: moni STM32 F407VET6 Development Board
+  vendor: others
+  socs:
+    - name: stm32f407xx
