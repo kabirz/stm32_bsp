@@ -50,6 +50,10 @@
 		volt-sensor0 = &vref;
 		volt-sensor1 = &vbat;
 	};
+	zephyr,user {
+		phy-reset-gpios = <&i2c2_pcf8574 7 GPIO_ACTIVE_HIGH>;
+		beep-gpios = <&i2c2_pcf8574 0 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &clk_lsi {
@@ -84,3 +88,24 @@
 	current-speed = <115200>;
 	status = "okay";
 };
+
+&i2c2 {
+	pinctrl-0 = <&i2c2_scl_ph4 &i2c2_sda_ph5>;
+	pinctrl-names = "default";
+	i2c2_pcf8574: i2c2_pcf8574@20 {
+		 compatible = "nxp,pcf857x";
+		 reg = <0x20>;
+		 gpio-controller;
+		 #gpio-cells = <2>;
+		 ngpios = <8>;
+		 status = "okay";
+	};
+	status = "okay";
+};
+
+&mac {
+	pinctrl-0 = <&eth_mdc_pc1 &eth_rxd0_pc4 &eth_rxd1_pc5 &eth_ref_clk_pa1 &eth_mdio_pa2 &eth_crs_dv_pa7 &eth_tx_en_pb11 &eth_txd0_pg13 &eth_txd1_pg14>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
