@@ -1,0 +1,38 @@
+/{
+	zephyr,user {
+		di-gpios = <&gpiod 3 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 4 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 5 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 6 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 5 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 6 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 7 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 8 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 9 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 10 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 11 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 2 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 0 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 1 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 3 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 4 GPIO_ACTIVE_HIGH>;
+
+		do-gpios = <&gpiod 7 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 8 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 9 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 10 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 11 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 12 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 13 GPIO_ACTIVE_HIGH>,
+							 <&gpiod 14 GPIO_ACTIVE_HIGH>;
+
+		doled-gpios = <&gpioe 8 GPIO_ACTIVE_HIGH>,
+		              <&gpioe 9 GPIO_ACTIVE_HIGH>,
+		              <&gpioe 10 GPIO_ACTIVE_HIGH>,
+		              <&gpioe 11 GPIO_ACTIVE_HIGH>,
+		              <&gpioe 12 GPIO_ACTIVE_HIGH>,
+		              <&gpioe 13 GPIO_ACTIVE_HIGH>,
+		              <&gpioe 14 GPIO_ACTIVE_HIGH>,
+		              <&gpioe 15 GPIO_ACTIVE_HIGH>;
+	};
+};

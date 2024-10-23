@@ -1,0 +1,48 @@
+
+menu "Data collect options"
+
+config MODBUS_TCP_PRIORITY
+	int "modbus tcp server priority"
+	default 20
+	help
+	  Use this to set modbus tcp server priority
+
+config MODBUS_RTU_PRIORITY
+	int "modbus rtu server priority"
+	default 20
+	help
+	  Use this to set modbus rtu server priority
+
+config MODBUS_TCP_STACK_SIZE
+	int "modbus tcp server stack size"
+	default 1024
+	help
+	  Use this to set modbus tcp server stack size
+
+config MODBUS_RTU_STACK_SIZE
+	int "modbus rtu server stack size"
+	default 1024
+	help
+	  Use this to set modbus rtu server stack size
+
+config MODBUS_COLS_REGISTER_NUMBERS
+	int "modbus cols register numbers"
+	default 8
+	help
+	  Use this to set modbus cols register numbers
+
+config MODBUS_INPUT_REGISTER_NUMBERS
+	int "modbus input register numbers"
+	default 6
+	help
+	  Use this to set modbus input register numbers
+
+config MODBUS_HOLDING_REGISTER_NUMBERS
+	int "modbus HOLDING register numbers"
+	default 18
+	help
+	  Use this to set modbus holding register numbers
+
+endmenu
+
+source "Kconfig.zephyr"

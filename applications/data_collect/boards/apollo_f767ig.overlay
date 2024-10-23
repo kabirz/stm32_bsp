@@ -1,0 +1,13 @@
+/{
+	zephyr,user {
+		phy-reset-gpios = <&i2c2_pcf8574 7 GPIO_ACTIVE_HIGH>;
+		beep-gpios = <&i2c2_pcf8574 0 GPIO_ACTIVE_HIGH>;
+		di-gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 1 GPIO_ACTIVE_HIGH>;
+
+		do-gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>,
+							 <&gpiob 1 GPIO_ACTIVE_HIGH>;
+		doled-gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>,
+									<&gpiob 1 GPIO_ACTIVE_HIGH>;
+	};
+};
