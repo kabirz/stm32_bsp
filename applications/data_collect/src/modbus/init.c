@@ -1,5 +1,11 @@
 #include <init.h>
 #include <zephyr/kernel.h>
+#include <zephyr/net/net_ip.h>
+#include <zephyr/net/net_if.h>
+#include <zephyr/net/net_l2.h>
+
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(init_modbus, LOG_LEVEL_INF);
 
 static const uint16_t holding_regs[CONFIG_MODBUS_HOLDING_REGISTER_NUMBERS] = {
     [HOLDING_DI_EN_IDX] = 0xffff,
@@ -25,7 +31,30 @@ int modbus_init(void)
         if (holding_regs[i])
             update_holding_reg(i, holding_regs[i]);
     }
+    struct in_addr addr, netmask;
+    struct net_if *iface;
+
+    iface = net_if_get_first_by_type(&NET_L2_GET_NAME(ETHERNET));
+    if (!iface) {
+        LOG_ERR("No ethernet interfaces found.");
+        return -1;
+    }
+
+    addr.s4_addr[0] = holding_regs[HOLDING_IP_ADDR_1_IDX];
+    addr.s4_addr[1] = holding_regs[HOLDING_IP_ADDR_2_IDX];
+    addr.s4_addr[2] = holding_regs[HOLDING_IP_ADDR_3_IDX];
+    addr.s4_addr[3] = holding_regs[HOLDING_IP_ADDR_4_IDX];
+
+    netmask.s_addr = 0xffffff;
+    if (net_if_ipv4_addr_add(iface, &addr, NET_ADDR_MANUAL, 0) == NULL) {
+        LOG_ERR("Cannot add ip address to interface");
+        return -1;
+    }
+    if (net_if_ipv4_set_netmask_by_addr(iface, &addr, &netmask) == false) {
+        LOG_ERR("Cannot add netmask to interface");
+        return -1;
+    }
     return 0;
 }
 
-SYS_INIT(modbus_init, POST_KERNEL, 90);
+SYS_INIT(modbus_init, APPLICATION, 10);

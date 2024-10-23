@@ -65,4 +65,4 @@ int dio_init(void)
     return 0;
 }
 
-SYS_INIT(dio_init, POST_KERNEL, 91);
+SYS_INIT(dio_init, APPLICATION, 12);

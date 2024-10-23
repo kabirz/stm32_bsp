@@ -47,4 +47,4 @@ int rtu_init(void)
 	return 0;
 }
 
-SYS_INIT(rtu_init, POST_KERNEL, 92);
+SYS_INIT(rtu_init, APPLICATION, 13);

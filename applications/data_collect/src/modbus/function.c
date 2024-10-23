@@ -92,19 +92,8 @@ static int holding_reg_wr(uint16_t addr, uint16_t reg)
 		reg = reg & 0xff;
 		mb_set_do(reg);
 		break;
-    case HOLDING_DI_EN_IDX:
-    case HOLDING_AI_EN_IDX:
-    case HOLDING_DI_SI_IDX:
-    case HOLDING_AI_SI_IDX:
-    case HOLDING_CAN_BPS_IDX:
-    case HOLDING_RS485_BPS_IDX:
-    case HOLDING_SLAVE_ID_IDX:
-
-		break;
 	case HOLDING_HIS_SAVE_IDX:
 		/* TODO */
-		break;
-    case HOLDING_CAN_ID_IDX:
 		break;
 	case HOLDING_IP_ADDR_1_IDX:
     case HOLDING_IP_ADDR_2_IDX:
