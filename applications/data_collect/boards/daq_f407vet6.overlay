@@ -1,5 +1,7 @@
 /{
 	zephyr,user {
+		status-gpios = <&gpioe 7 GPIO_ACTIVE_HIGH>;
+
 		di-gpios = <&gpiod 3 GPIO_ACTIVE_HIGH>,
 							 <&gpiod 4 GPIO_ACTIVE_HIGH>,
 							 <&gpiod 5 GPIO_ACTIVE_HIGH>,

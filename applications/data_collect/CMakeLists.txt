@@ -10,6 +10,7 @@ target_sources(app PRIVATE
   src/modbus/tcp.c
   src/modbus/function.c
   src/modbus/dio.c
+  src/modbus/init.c
 )
 
 target_include_directories(app PRIVATE

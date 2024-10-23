@@ -16,6 +16,7 @@
 LOG_MODULE_REGISTER(tcp_modbus, LOG_LEVEL_INF);
 
 #define MODBUS_TCP_PORT 502
+static uint8_t data_buf[256];
 
 static struct modbus_adu tmp_adu;
 K_SEM_DEFINE(received, 0, 1);
@@ -40,7 +41,7 @@ static int server_raw_cb(const int iface, const struct modbus_adu *adu,
 	return 0;
 }
 
-const static struct modbus_iface_param server_param = {
+static struct modbus_iface_param server_param = {
 	.mode = MODBUS_MODE_RAW,
 	.server = {
 		.user_cb = &mbs_cbs,
@@ -62,7 +63,7 @@ static int init_modbus_server(void)
 			iface_name);
 		return -ENODEV;
 	}
-
+	server_param.server.unit_id = get_holding_reg(HOLDING_SLAVE_ID_IDX);
 	err = modbus_init_server(server_iface, server_param);
 
 	if (err < 0) {
@@ -73,14 +74,10 @@ static int init_modbus_server(void)
 
 static int modbus_tcp_reply(int client, struct modbus_adu *adu)
 {
-	uint8_t header[MODBUS_MBAP_AND_FC_LENGTH];
+	modbus_raw_put_header(adu, data_buf);
+	memcpy(data_buf + MODBUS_MBAP_AND_FC_LENGTH, adu->data, adu->length);
 
-	modbus_raw_put_header(adu, header);
-	if (send(client, header, sizeof(header), 0) < 0) {
-		return -errno;
-	}
-
-	if (send(client, adu->data, adu->length, 0) < 0) {
+	if (send(client, data_buf, MODBUS_MBAP_AND_FC_LENGTH + adu->length, 0) < 0) {
 		return -errno;
 	}
 
@@ -187,4 +184,3 @@ void tcp_poll(void)
 }
 
 K_THREAD_DEFINE(tcp_id, CONFIG_MODBUS_TCP_STACK_SIZE, tcp_poll, NULL, NULL, NULL, CONFIG_MODBUS_TCP_PRIORITY, 0, 0);
-
