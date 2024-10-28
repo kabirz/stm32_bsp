@@ -41,7 +41,7 @@ void di_process_handler(void)
                 val |= BIT(i);
         }
         update_input_reg(INPUT_DI_IDX, val);
-	    k_msleep(get_holding_reg(HOLDING_DI_SI_IDX));
+        k_msleep(get_holding_reg(HOLDING_DI_SI_IDX));
     }
 }
 
@@ -56,6 +56,9 @@ int dio_init(void)
     }
 
     for (int i = 0; i < ARRAY_SIZE(doled_gpios); i++) {
+    	gpio_pin_configure_dt(&do_gpios[i], GPIO_OUTPUT_INACTIVE);
+    	gpio_pin_set_dt(&do_gpios[i], 0);
+
     	gpio_pin_configure_dt(&doled_gpios[i], GPIO_OUTPUT_INACTIVE);
     	gpio_pin_set_dt(&doled_gpios[i], 0);
     }
