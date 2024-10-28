@@ -3,6 +3,9 @@
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_l2.h>
+#ifdef CONFIG_SETTINGS 
+#include <zephyr/settings/settings.h>
+#endif
 
 static const uint16_t holding_regs[CONFIG_MODBUS_HOLDING_REGISTER_NUMBERS] = {
     [HOLDING_DI_EN_IDX] = 0xffff,
@@ -23,13 +26,18 @@ static const uint16_t holding_regs[CONFIG_MODBUS_HOLDING_REGISTER_NUMBERS] = {
 
 int modbus_init(void)
 {
+    struct in_addr addr, netmask;
+    struct net_if *iface;
+
     update_input_reg(INPUT_VER_IDX, 0x204);
     for (size_t i = 0; i < ARRAY_SIZE(holding_regs); i++) {
         if (holding_regs[i])
             update_holding_reg(i, holding_regs[i]);
     }
-    struct in_addr addr, netmask;
-    struct net_if *iface;
+
+#ifdef CONFIG_SETTINGS 
+	settings_load();
+#endif
 
     iface = net_if_get_first_by_type(&NET_L2_GET_NAME(ETHERNET));
     if (!iface) {
@@ -37,10 +45,10 @@ int modbus_init(void)
         return -1;
     }
 
-    addr.s4_addr[0] = holding_regs[HOLDING_IP_ADDR_1_IDX];
-    addr.s4_addr[1] = holding_regs[HOLDING_IP_ADDR_2_IDX];
-    addr.s4_addr[2] = holding_regs[HOLDING_IP_ADDR_3_IDX];
-    addr.s4_addr[3] = holding_regs[HOLDING_IP_ADDR_4_IDX];
+    addr.s4_addr[0] = get_holding_reg(HOLDING_IP_ADDR_1_IDX);
+    addr.s4_addr[1] = get_holding_reg(HOLDING_IP_ADDR_2_IDX);
+    addr.s4_addr[2] = get_holding_reg(HOLDING_IP_ADDR_3_IDX);
+    addr.s4_addr[3] = get_holding_reg(HOLDING_IP_ADDR_4_IDX);
 
     netmask.s_addr = 0xffffff;
     if (net_if_ipv4_addr_add(iface, &addr, NET_ADDR_MANUAL, 0) == NULL) {
@@ -54,4 +62,4 @@ int modbus_init(void)
     return 0;
 }
 
-SYS_INIT(modbus_init, APPLICATION, 10);
+SYS_INIT(modbus_init, APPLICATION, 11);

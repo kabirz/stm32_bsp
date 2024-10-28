@@ -3,6 +3,9 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/modbus/modbus.h>
 #include <zephyr/sys/reboot.h>
+#ifdef CONFIG_SETTINGS
+#include <zephyr/settings/settings.h>
+#endif
 
 static uint16_t holding_reg[CONFIG_MODBUS_HOLDING_REGISTER_NUMBERS];
 static uint16_t input_reg[CONFIG_MODBUS_INPUT_REGISTER_NUMBERS];
@@ -93,16 +96,19 @@ static int holding_reg_wr(uint16_t addr, uint16_t reg)
 		/* TODO */
 		break;
 	case HOLDING_IP_ADDR_1_IDX:
-    case HOLDING_IP_ADDR_2_IDX:
-    case HOLDING_IP_ADDR_3_IDX:
-    case HOLDING_IP_ADDR_4_IDX:
+	case HOLDING_IP_ADDR_2_IDX:
+	case HOLDING_IP_ADDR_3_IDX:
+	case HOLDING_IP_ADDR_4_IDX:
 		break;
-    case HOLDING_TIMESTAMPH_IDX:
-    case HOLDING_TIMESTAMPL_IDX:
+	case HOLDING_TIMESTAMPH_IDX:
+	case HOLDING_TIMESTAMPL_IDX:
 		break;
-    case HOLDING_CFG_SAVE_IDX:
+	case HOLDING_CFG_SAVE_IDX:
+#ifdef CONFIG_SETTINGS
+		settings_save();
+#endif
 		break;
-    case HOLDING_REBOOT_IDX:
+	case HOLDING_REBOOT_IDX:
 		sys_reboot(SYS_REBOOT_COLD);
 		break;
 	default:
@@ -148,4 +154,112 @@ struct modbus_user_callbacks mbs_cbs = {
 	.holding_reg_wr = holding_reg_wr,
 	.input_reg_rd = input_reg_rd,
 };
+
+#ifdef CONFIG_SETTINGS 
+#include <zephyr/settings/settings.h>
+
+int mb_handle_set(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg)
+{
+    const char *next;
+    size_t name_len, offset;
+    int rc;
+
+    name_len = settings_name_next(name, &next);
+
+    if (!next) {
+	if (!strncmp(name, "history", name_len)) {
+	    rc = read_cb(cb_arg, holding_reg + HOLDING_HIS_SAVE_IDX, sizeof(uint16_t));
+	    LOG_INF("<modbus/history> = %d", holding_reg[HOLDING_HIS_SAVE_IDX]);
+	   return 0;
+	} else if (!strncmp(name, "rs485_bps", name_len)) {
+	    rc = read_cb(cb_arg, holding_reg + HOLDING_RS485_BPS_IDX, sizeof(uint16_t));
+	    LOG_INF("<modbus/rs485_bps> = %d", holding_reg[HOLDING_RS485_BPS_IDX]);
+	   return 0;
+	} else if (!strncmp(name, "slave_id", name_len)) {
+	    rc = read_cb(cb_arg, holding_reg + HOLDING_SLAVE_ID_IDX, sizeof(uint16_t));
+	    LOG_INF("<modbus/slave_id> = %d", holding_reg[HOLDING_SLAVE_ID_IDX]);
+	   return 0;
+	} else if (!strncmp(name, "ip", name_len)) {
+	    rc = read_cb(cb_arg, holding_reg + HOLDING_IP_ADDR_1_IDX, sizeof(uint16_t)*4);
+	    LOG_INF("<modbus/ip> = %d.%d.%d.%d",
+		holding_reg[HOLDING_IP_ADDR_1_IDX],
+		holding_reg[HOLDING_IP_ADDR_2_IDX],
+		holding_reg[HOLDING_IP_ADDR_3_IDX],
+		holding_reg[HOLDING_IP_ADDR_4_IDX]
+	    );
+	   return 0;
+	}
+    } else if (!strncmp(name, "ai", name_len)) {
+    	offset = name_len + 1;
+	name_len = settings_name_next(name+offset, &next);
+    	if (!next) {
+	    if (!strncmp(name+offset, "enable", name_len)) {
+	    	rc = read_cb(cb_arg, holding_reg + HOLDING_AI_EN_IDX, sizeof(uint16_t));
+	    	LOG_INF("<modbus/ai/enable> = 0x%x", holding_reg[HOLDING_AI_EN_IDX]);
+	    	return 0;
+	    } else if (!strncmp(name+offset, "time", name_len)) {
+	    	rc = read_cb(cb_arg, holding_reg + HOLDING_AI_SI_IDX, sizeof(uint16_t));
+	    	LOG_INF("<modbus/ai/time> = %d ms", holding_reg[HOLDING_AI_SI_IDX]);
+	    	return 0;
+	    }
+	}
+    } else if (!strncmp(name, "di", name_len)) {
+    	offset = name_len + 1;
+	name_len = settings_name_next(name+offset, &next);
+    	if (!next) {
+	    if (!strncmp(name+offset, "enable", name_len)) {
+	    	rc = read_cb(cb_arg, holding_reg + HOLDING_DI_EN_IDX, sizeof(uint16_t));
+	    	LOG_INF("<modbus/di/enable> = 0x%x", holding_reg[HOLDING_DI_EN_IDX]);
+	    	return 0;
+	    } else if (!strncmp(name+offset, "time", name_len)) {
+	    	rc = read_cb(cb_arg, holding_reg + HOLDING_DI_SI_IDX, sizeof(uint16_t));
+	    	LOG_INF("<modbus/di/time> = %d ms", holding_reg[HOLDING_DI_SI_IDX]);
+	    	return 0;
+	    }
+	}
+    } else if (!strncmp(name, "can", name_len)) {
+    	offset = name_len + 1;
+	name_len = settings_name_next(name+offset, &next);
+    	if (!next) {
+	    if (!strncmp(name+offset, "id", name_len)) {
+	    	rc = read_cb(cb_arg, holding_reg + HOLDING_CAN_ID_IDX, sizeof(uint16_t));
+	    	LOG_INF("<modbus/can/id> = %d", holding_reg[HOLDING_CAN_ID_IDX]);
+	    	return 0;
+	    } else if (!strncmp(name+offset, "bps", name_len)) {
+	    	rc = read_cb(cb_arg, holding_reg + HOLDING_CAN_BPS_IDX, sizeof(uint16_t));
+	    	LOG_INF("<modbus/can/bps> = %d", holding_reg[HOLDING_CAN_BPS_IDX]);
+	    	return 0;
+	    }
+	}
+    }
+
+    return -ENOENT;
+}
+
+int mb_handle_export(int (*cb)(const char *name, const void *value, size_t val_len))
+{
+    LOG_INF("export keys under <modbus> handler");
+    (void)cb("modbus/ai/enable", holding_reg + HOLDING_AI_EN_IDX, sizeof(uint16_t));
+    (void)cb("modbus/ai/time", holding_reg + HOLDING_AI_SI_IDX, sizeof(uint16_t));
+    (void)cb("modbus/di/enable", holding_reg + HOLDING_DI_EN_IDX, sizeof(uint16_t));
+    (void)cb("modbus/di/time", holding_reg + HOLDING_DI_SI_IDX, sizeof(uint16_t));
+    (void)cb("modbus/history", holding_reg + HOLDING_HIS_SAVE_IDX, sizeof(uint16_t));
+    (void)cb("modbus/can/id", holding_reg + HOLDING_CAN_ID_IDX, sizeof(uint16_t));
+    (void)cb("modbus/can/bps", holding_reg + HOLDING_CAN_BPS_IDX, sizeof(uint16_t));
+    (void)cb("modbus/rs485_bps", holding_reg + HOLDING_RS485_BPS_IDX, sizeof(uint16_t));
+    (void)cb("modbus/slave_id", holding_reg + HOLDING_SLAVE_ID_IDX, sizeof(uint16_t));
+    (void)cb("modbus/ip", holding_reg + HOLDING_IP_ADDR_1_IDX, sizeof(uint16_t)*4);
+
+    return 0;
+}
+
+SETTINGS_STATIC_HANDLER_DEFINE(modbus, "modbus", NULL, mb_handle_set, NULL, mb_handle_export);
+
+static int main_settings_init(void)
+{
+    return settings_subsys_init();
+}
+
+SYS_INIT(main_settings_init, APPLICATION, 10);
+#endif
 
