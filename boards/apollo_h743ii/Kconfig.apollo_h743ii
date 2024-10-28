@@ -1,0 +1,4 @@
+
+config BOARD_APOLLO_H743II
+	select SOC_STM32H743XX
+
