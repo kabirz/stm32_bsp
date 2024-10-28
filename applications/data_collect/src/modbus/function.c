@@ -4,9 +4,6 @@
 #include <zephyr/modbus/modbus.h>
 #include <zephyr/sys/reboot.h>
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(func_modbus, LOG_LEVEL_INF);
-
 static uint16_t holding_reg[CONFIG_MODBUS_HOLDING_REGISTER_NUMBERS];
 static uint16_t input_reg[CONFIG_MODBUS_INPUT_REGISTER_NUMBERS];
 static uint8_t coils_state[CONFIG_MODBUS_COLS_REGISTER_NUMBERS];

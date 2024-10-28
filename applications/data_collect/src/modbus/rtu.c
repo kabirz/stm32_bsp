@@ -4,9 +4,6 @@
 #include <zephyr/modbus/modbus.h>
 #include <zephyr/kernel.h>
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(rtu_modbus, LOG_LEVEL_INF);
-
 static struct modbus_iface_param server_param = {
 	.mode = MODBUS_MODE_RTU,
 	.server = {

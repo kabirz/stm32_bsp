@@ -45,4 +45,8 @@ config MODBUS_HOLDING_REGISTER_NUMBERS
 
 endmenu
 
+module = MODBUS_APP
+module-str = modbus_app
+source "subsys/logging/Kconfig.template.log_config"
+
 source "Kconfig.zephyr"

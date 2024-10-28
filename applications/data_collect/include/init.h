@@ -44,5 +44,7 @@ int update_input_reg(uint16_t addr, uint16_t reg);
 int update_holding_reg(uint16_t addr, uint16_t reg);
 uint16_t get_holding_reg(uint16_t addr);
 
+#include <zephyr/logging/log.h>
+LOG_MODULE_DECLARE(modbus_main, CONFIG_MODBUS_APP_LOG_LEVEL);
 #endif
 

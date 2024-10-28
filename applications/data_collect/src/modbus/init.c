@@ -4,9 +4,6 @@
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_l2.h>
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(init_modbus, LOG_LEVEL_INF);
-
 static const uint16_t holding_regs[CONFIG_MODBUS_HOLDING_REGISTER_NUMBERS] = {
     [HOLDING_DI_EN_IDX] = 0xffff,
     [HOLDING_AI_EN_IDX] = 0xf,

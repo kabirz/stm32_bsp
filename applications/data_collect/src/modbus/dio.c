@@ -2,9 +2,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(dio_modbus, LOG_LEVEL_INF);
-
 #define USER_NODE DT_PATH(zephyr_user)
 
 static const struct gpio_dt_spec di_gpios[] = {

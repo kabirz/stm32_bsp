@@ -17,6 +17,10 @@ target_sources_ifdef(CONFIG_DT_HAS_ZEPHYR_MODBUS_SERIAL_ENABLED app PRIVATE
   src/modbus/rtu.c
 )
 
+target_sources_ifdef(CONFIG_DT_HAS_ZEPHYR_MODBUS_SERIAL_ENABLED app PRIVATE
+  src/modbus/rtu.c
+)
+
 target_include_directories(app PRIVATE
   include
 )

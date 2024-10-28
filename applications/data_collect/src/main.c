@@ -1,8 +1,9 @@
+#include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
-#include <init.h>
+#define USER_NODE DT_PATH(zephyr_user)
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(main_modbus, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(modbus_main, CONFIG_MODBUS_APP_LOG_LEVEL);
 
 int main(void)
 {

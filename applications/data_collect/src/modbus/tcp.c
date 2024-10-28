@@ -12,9 +12,6 @@
 
 #include <zephyr/net/socket.h>
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(tcp_modbus, LOG_LEVEL_INF);
-
 #define MODBUS_TCP_PORT 502
 static uint8_t data_buf[256];
 
