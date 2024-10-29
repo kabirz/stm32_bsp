@@ -35,7 +35,7 @@ int adc_handler(void)
 	    k_msleep(get_holding_reg(HOLDING_AI_SI_IDX));
 
 	    for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-	        if (get_holding_reg(HOLDING_AI_EN_IDX) & (1 < i)) {
+	        if (get_holding_reg(HOLDING_AI_EN_IDX) & (1 << i)) {
 	            int32_t val_mv;
 
 	            (void)adc_sequence_init_dt(&adc_channels[i], &sequence);
@@ -66,10 +66,10 @@ int adc_handler(void)
 #else
 	    	        LOG_DBG("val[%d]: %d mv", i, val_mv);
 #endif
-	    	        update_holding_reg(INPUT_AI0_IDX+i, val_mv);
+	    	        update_input_reg(INPUT_AI0_IDX+i, val_mv);
 	            }
 	        } else {
-	            update_holding_reg(INPUT_AI0_IDX+i, 0);
+	            update_input_reg(INPUT_AI0_IDX+i, 0);
 	        }
 	    }
     }
@@ -77,4 +77,3 @@ int adc_handler(void)
 }
 
 K_THREAD_DEFINE(adc_id, 1024, adc_handler, NULL, NULL, NULL, CONFIG_MODBUS_TCP_PRIORITY, 0, 0);
-

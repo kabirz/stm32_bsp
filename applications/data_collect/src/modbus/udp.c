@@ -10,7 +10,7 @@ struct udp_data_json {
     const char *ip;
     uint16_t slave_id;
     uint32_t timestamp;
-}
+};
 
 static int parse_udp_msg(char *msg)
 {
