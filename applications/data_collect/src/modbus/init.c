@@ -1,5 +1,6 @@
 #include <init.h>
 #include <zephyr/kernel.h>
+#include <time.h>
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_l2.h>
@@ -28,12 +29,16 @@ int modbus_init(void)
 {
     struct in_addr addr, netmask;
     struct net_if *iface;
+    uint32_t t = time(NULL);
 
     update_input_reg(INPUT_VER_IDX, 0x204);
     for (size_t i = 0; i < ARRAY_SIZE(holding_regs); i++) {
         if (holding_regs[i])
             update_holding_reg(i, holding_regs[i]);
     }
+
+    update_holding_reg(HOLDING_TIMESTAMPH_IDX, t>>16);
+    update_holding_reg(HOLDING_TIMESTAMPL_IDX, t&UINT16_MAX);
 
 #ifdef CONFIG_SETTINGS 
 	settings_load();
