@@ -36,6 +36,8 @@
 		              <&gpioe 13 GPIO_ACTIVE_HIGH>,
 		              <&gpioe 14 GPIO_ACTIVE_HIGH>,
 		              <&gpioe 15 GPIO_ACTIVE_HIGH>;
+
+		io-channels = <&adc1 0xa>, <&adc1 0xb>, <&adc1 0xc>, <&adc1 0xd>;
 	};
 };
 
@@ -48,3 +50,46 @@
 		re-gpios = <&gpioa 1 GPIO_ACTIVE_LOW>;
 	};
 };
+
+&adc1 {
+	pinctrl-0 = < &adc1_in10_pc0 &adc1_in11_pc1 &adc1_in12_pc2 &adc1_in13_pc3>;
+	pinctrl-names = "default";
+	st,adc-clock-source = <SYNC>;
+	st,adc-prescaler = <4>;
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	channel@a {
+		reg = <0xa>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@b {
+		reg = <0xb>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@c {
+		reg = <0xc>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@d {
+		reg = <0xd>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+
+};
+

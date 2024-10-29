@@ -10,6 +10,33 @@
 							 <&gpiob 1 GPIO_ACTIVE_HIGH>;
 		doled-gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>,
 									<&gpiob 1 GPIO_ACTIVE_HIGH>;
+
+		io-channels = <&adc1 0x13>, <&adc1 0x3>;
+	};
+};
+
+&adc1 {
+	pinctrl-0 = < &adc1_inp19_pa5 &adc1_inp3_pa6>;
+	pinctrl-names = "default";
+	st,adc-clock-source = <SYNC>;
+	st,adc-prescaler = <4>;
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	channel@13 {
+		reg = <0x13>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@3 {
+		reg = <0x3>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
 	};
 };
 
