@@ -12,6 +12,7 @@ target_sources(app PRIVATE
   src/modbus/function.c
   src/modbus/dio.c
   src/modbus/init.c
+  src/cJSON/cJSON.c
 )
 
 target_sources_ifdef(CONFIG_DT_HAS_ZEPHYR_MODBUS_SERIAL_ENABLED app PRIVATE
@@ -27,4 +28,5 @@ target_sources_ifdef(CONFIG_ADC app PRIVATE
 
 target_include_directories(app PRIVATE
   include
+  src/cJSON
 )
