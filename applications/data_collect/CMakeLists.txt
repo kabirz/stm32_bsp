@@ -8,6 +8,7 @@ project(data-collect)
 target_sources(app PRIVATE
   src/main.c
   src/modbus/tcp.c
+  src/modbus/udp.c
   src/modbus/function.c
   src/modbus/dio.c
   src/modbus/init.c
