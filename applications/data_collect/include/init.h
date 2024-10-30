@@ -37,12 +37,32 @@ typedef enum {
 
 #include <zephyr/kernel.h>
 
+#define DI_TYPE   1
+#define AI_TYPE   2
+#define AI_NUM    4
+struct his_data {
+    uint16_t type;
+    uint32_t timestamps;
+    union {
+        struct {
+            uint16_t di_en_status;
+            uint16_t di_value;
+        } di __packed;
+        struct {
+            uint16_t ai_en_status;
+            uint16_t ai_value[AI_NUM];
+        } ai __packed;
+    } __packed;
+} __packed;
+
 
 extern struct modbus_user_callbacks mbs_cbs;
 int mb_set_do(uint16_t val);
 int update_input_reg(uint16_t addr, uint16_t reg);
 int update_holding_reg(uint16_t addr, uint16_t reg);
 uint16_t get_holding_reg(uint16_t addr);
+uint16_t get_input_reg(size_t index);
+int write_history_data(void *data, size_t size);
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(modbus_main, CONFIG_MODBUS_APP_LOG_LEVEL);

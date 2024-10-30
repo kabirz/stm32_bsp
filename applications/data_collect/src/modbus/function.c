@@ -147,6 +147,13 @@ static int input_reg_rd(uint16_t addr, uint16_t *reg)
 	return 0;
 }
 
+uint16_t get_input_reg(size_t index)
+{
+    if (index < CONFIG_MODBUS_INPUT_REGISTER_NUMBERS)
+	return input_reg[index];
+    return 0;
+}
+
 struct modbus_user_callbacks mbs_cbs = {
 	.coil_rd = coil_rd,
 	.coil_wr = coil_wr,

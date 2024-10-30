@@ -1,5 +1,6 @@
 #include <init.h>
 #include <zephyr/drivers/adc.h>
+#include <time.h>
 
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
@@ -16,6 +17,7 @@ int adc_handler(void)
 {
     int err;
     uint16_t buf;
+    struct his_data data;
     struct adc_sequence sequence = {.buffer = &buf, .buffer_size = sizeof(buf)};
 
     for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
@@ -72,8 +74,17 @@ int adc_handler(void)
 	            update_input_reg(INPUT_AI0_IDX+i, 0);
 	        }
 	    }
+	    if (get_holding_reg(HOLDING_HIS_SAVE_IDX)) {
+	        data.type = AI_TYPE;
+	        data.timestamps = (uint32_t)time(NULL);
+	        for (size_t i = 0; i < ARRAY_SIZE(adc_channels); i++) {
+	            data.ai.ai_value[i] = get_input_reg(INPUT_AI0_IDX + i);
+	        }
+	        data.ai.ai_en_status = get_holding_reg(HOLDING_AI_EN_IDX);
+            write_history_data(&data, sizeof(data));
+	    }
     }
     return 0;
 }
 
-K_THREAD_DEFINE(adc_id, 1024, adc_handler, NULL, NULL, NULL, CONFIG_MODBUS_TCP_PRIORITY, 0, 0);
+K_THREAD_DEFINE(adc_id, 2048, adc_handler, NULL, NULL, NULL, CONFIG_MODBUS_TCP_PRIORITY, 0, 0);

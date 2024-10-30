@@ -14,6 +14,7 @@ target_sources(app PRIVATE
   src/modbus/init.c
   src/cJSON/cJSON.c
   src/time.c
+  src/modbus/history.c
 )
 
 target_sources_ifdef(CONFIG_DT_HAS_ZEPHYR_MODBUS_SERIAL_ENABLED app PRIVATE

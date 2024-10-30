@@ -1,6 +1,7 @@
 #include <init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
+#include <time.h>
 
 #define USER_NODE DT_PATH(zephyr_user)
 
@@ -33,15 +34,23 @@ int mb_set_do(uint16_t reg)
 void di_process_handler(void)
 {
     uint16_t val;
+    struct his_data data;
 
     while (1) {
+        k_msleep(get_holding_reg(HOLDING_DI_SI_IDX));
         val = 0;
         for (uint8_t i = 0; i < ARRAY_SIZE(di_gpios); i++) {
             if ((get_holding_reg(HOLDING_DI_EN_IDX) & BIT(i)) && gpio_pin_get_dt(&di_gpios[i]))
                 val |= BIT(i);
         }
         update_input_reg(INPUT_DI_IDX, val);
-        k_msleep(get_holding_reg(HOLDING_DI_SI_IDX));
+	    if (get_holding_reg(HOLDING_HIS_SAVE_IDX)) {
+	        data.type = DI_TYPE;
+	        data.timestamps = (uint32_t)time(NULL);
+	        data.di.di_value = get_input_reg(INPUT_DI_IDX);
+	        data.di.di_en_status = get_holding_reg(HOLDING_DI_EN_IDX);
+            write_history_data(&data, sizeof(data));
+	    }
     }
 }
 
