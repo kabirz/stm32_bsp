@@ -1,3 +1,5 @@
+/delete-node/ &fstab;
+
 /{
 	zephyr,user {
 		phy-reset-gpios = <&i2c2_pcf8574 7 GPIO_ACTIVE_HIGH>;
@@ -12,6 +14,12 @@
 									<&gpiob 1 GPIO_ACTIVE_HIGH>;
 
 		io-channels = <&adc1 0x13>, <&adc1 0x3>;
+	};
+	fatfs {
+		compatible = "zephyr,flash-disk";
+		partition = <&storage_partition>;
+		disk-name = "NAND";
+		cache-size = <4096>;
 	};
 };
 

@@ -28,7 +28,12 @@ target_sources_ifdef(CONFIG_ADC app PRIVATE
   src/modbus/adc.c
 )
 
+target_sources_ifdef(CONFIG_FILE_SYSTEM app PRIVATE
+  src/fs.c
+)
+
 target_include_directories(app PRIVATE
   include
   src/cJSON
 )
+

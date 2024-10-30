@@ -18,7 +18,7 @@
 		zephyr,settings-partition = &cfg_partition;
 	};
 
-	fstab {
+	fstab: fstab {
 		compatible = "zephyr,fstab";
 		lfs1: lfs1 {
 			compatible = "zephyr,fstab,littlefs";

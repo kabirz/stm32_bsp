@@ -7,8 +7,11 @@
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(modbus_history, LOG_LEVEL_INF);
-
+#if DT_NODE_EXISTS(DT_NODELABEL(lfs1))
 #define ROOT DT_PROP(DT_NODELABEL(lfs1), mount_point)
+#elif DT_NODE_EXISTS(DT_INST(0, zephyr_flash_disk))
+#define ROOT "/"DT_PROP(DT_INST(0, zephyr_flash_disk), disk_name)":"
+#endif
 #define MAX_FILE_SIZE (1024ul*1024ul)
 #define MAX_FILE_NUM  (10ul*1024ul*1024ul/MAX_FILE_SIZE)
 static int fd = -1;
@@ -26,7 +29,7 @@ static int get_file(char *path, bool latest, int *file_num)
     DIR *dir;
     struct stat st;
     struct dirent *ptr;
-    time_t val = 0;
+    uint32_t val = 0, tmp;
     int size = 0, num = 0;
     char file_name[64];
 
@@ -39,22 +42,24 @@ static int get_file(char *path, bool latest, int *file_num)
     while ((ptr = readdir(dir)) != NULL) {
         if ((strncmp(ptr->d_name, "data_", strlen("data_")) != 0)) continue;
         if (snprintf(path, 128, ROOT"/%s", ptr->d_name) < 0) return -1;
+    	if (sscanf(ptr->d_name, "data_%u.raw", &tmp) != 1) continue;
+
         if (stat(path, &st) == 0) {
             if (!S_ISREG(st.st_mode)) continue;
             num += 1;
             if (val == 0) {
-                val = st.st_mtime;
+                val = tmp;
                 size = st.st_size;
                 if (snprintf(file_name, sizeof(file_name), "%s", ptr->d_name) < 0) return -1;
             } else if (latest) {
-                if (val < st.st_mtime) {
-                    val = st.st_mtime;
+                if (val < tmp) {
+                    val = tmp;
                     size = st.st_size;
                     if (snprintf(file_name, sizeof(file_name), "%s", ptr->d_name) < 0) return -1;
                 }
             } else {
-                if (val > st.st_mtime) {
-                    val = st.st_mtime;
+                if (val > tmp) {
+                    val = tmp;
                     size = st.st_size;
                     if (snprintf(file_name, sizeof(file_name), "%s", ptr->d_name) < 0) return -1;
                 }
@@ -92,12 +97,9 @@ static int open_latest_file(bool create)
 
     /* create new file */
     {
-        time_t t = time(NULL);
-        struct tm *tm = localtime(&t);
-        char str[32];
+        uint32_t t = time(NULL);
 
-        strftime(str, sizeof(str), "%m%d_%H%M", tm);
-        if (snprintf(file_name, sizeof(file_name), ROOT"/data_%s.raw", str) < 0) return -1;
+        if (snprintf(file_name, sizeof(file_name), ROOT"/data_%u.raw", t) < 0) return -1;
         LOG_INF("file name: %s", file_name);
         fd = open(file_name, O_CREAT|O_WRONLY);
         fd_offset = 0;
