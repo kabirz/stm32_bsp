@@ -14,9 +14,6 @@ s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 mreq = struct.pack("4sl", inet_aton(MULTICAST_GROUP), INADDR_ANY)
 s.setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP, mreq)
 
-# bind ip and port
-s.bind(("192.168.12.12", 10081))
-
 # msgs
 cfg_msgs = {
    'set_device_info' : {

@@ -16,6 +16,7 @@ static int parse_udp_msg(char *msg)
 {
     cJSON *recv_root, *send_root, *ch1, *ch2;
     char *str;
+    int len = 0;
 
     send_root = cJSON_CreateObject();
     recv_root = cJSON_Parse(msg);
@@ -27,7 +28,7 @@ static int parse_udp_msg(char *msg)
 
     ch1 = recv_root->child;
     while (ch1) {
-    	if (strcmp(ch1->string, "get_device_info") == 0) {
+    	if (strcmp(ch1->string, "get_device_info") == 0 && cJSON_IsTrue(ch1)) {
     	    cJSON *dev_child = cJSON_AddObjectToObject(send_root, "device_info");
     	    uint32_t timestamp = (uint32_t)time(NULL);
             char tmp_buf[20];
@@ -41,7 +42,7 @@ static int parse_udp_msg(char *msg)
             cJSON_AddNumberToObject(dev_child, "slave_id", get_holding_reg(HOLDING_SLAVE_ID_IDX));
             cJSON_AddNumberToObject(dev_child, "rs485_bps", get_holding_reg(HOLDING_RS485_BPS_IDX));
             cJSON_AddNumberToObject(dev_child, "timestamp", timestamp);
-    	} else if (strcmp(ch1->string, "set_device_info") == 0) {
+    	} else if (strcmp(ch1->string, "set_device_info") == 0 && cJSON_IsObject(ch1)) {
     	    /* set device infomation, ip address, timestamp, modbus slave id */
     	    cJSON *dev_child = cJSON_AddObjectToObject(send_root, "device_info");
     	    bool reg_changed = false;
@@ -95,11 +96,12 @@ static int parse_udp_msg(char *msg)
 
 out:
     str = cJSON_Print(send_root);
-    strncpy(send_buffer, str, strlen(str));
+    len = strlen(str) + 1;
+    strncpy(send_buffer, str, len);
     cJSON_free(str);
     cJSON_Delete(send_root);
 
-    return strlen(str);
+    return len-1;
 }
 
 static void udp_poll(void)
@@ -119,19 +121,19 @@ static void udp_poll(void)
     	return;
     }
 
+    mreq.imr_multiaddr.s_addr = inet_addr(MULTICAST_GROUP);
+    mreq.imr_address.s_addr = INADDR_ANY;
+
+    if (setsockopt(serv, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
+    	LOG_WRN("failed to join multicast group, error: %d", errno);
+    }
+
     bind_addr.sin_family = AF_INET;
     bind_addr.sin_addr.s_addr = INADDR_ANY;
     bind_addr.sin_port = htons(MULTICAST_PORT);
     if (bind(serv, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) < 0) {
     	LOG_ERR("error: bind: %d", errno);
     	return;
-    }
-
-    mreq.imr_multiaddr.s_addr = inet_addr(MULTICAST_GROUP);
-    mreq.imr_address.s_addr = INADDR_ANY;
-
-    if (setsockopt(serv, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
-    	LOG_WRN("failed to join multicast group, error: %d", errno);
     }
 
     while (1) {
