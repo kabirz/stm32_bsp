@@ -3,4 +3,6 @@ out
 CMakeCache.txt
 CMakeFiles
 .cache
-
+*.i
+*.log
+compile_commands.json
