@@ -1,25 +1,27 @@
 /*
- * Copyright (c) 2020 PHYTEC Messtechnik GmbH
- * Copyright (c) 2021 Nordic Semiconductor ASA
- *
+ * Copyright (c) 2024 kabirz
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <init.h>
-#include <zephyr/sys/util.h>
 #include <zephyr/modbus/modbus.h>
-#include <zephyr/kernel.h>
-
+#include <zephyr/posix/sys/select.h>
 #include <zephyr/net/socket.h>
 
+#define MAX_CLIENTS 3
 #define MODBUS_TCP_PORT 502
 static uint8_t data_buf[256];
+static struct modbus_client {
+    int fd;
+    int64_t time;
+} mb_clients[MAX_CLIENTS];
 
 static struct modbus_adu tmp_adu;
 K_SEM_DEFINE(received, 0, 1);
 static int server_iface;
 
-static int server_raw_cb(const int iface, const struct modbus_adu *adu, void *user_data)
+static int server_raw_cb(const int iface, const struct modbus_adu *adu,
+			 void *user_data)
 {
     LOG_DBG("Server raw callback from interface %d", iface);
 
@@ -68,66 +70,20 @@ static int init_modbus_server(void)
     return err;
 }
 
-static int modbus_tcp_reply(int client, struct modbus_adu *adu)
-{
-    modbus_raw_put_header(adu, data_buf);
-    memcpy(data_buf + MODBUS_MBAP_AND_FC_LENGTH, adu->data, adu->length);
-
-    if (send(client, data_buf, MODBUS_MBAP_AND_FC_LENGTH + adu->length, 0) < 0) {
-	return -errno;
-    }
-
-    return 0;
-}
-
-static int modbus_tcp_connection(int client)
-{
-    uint8_t header[MODBUS_MBAP_AND_FC_LENGTH];
-    int rc;
-    int data_len;
-
-    rc = recv(client, header, sizeof(header), MSG_WAITALL);
-    if (rc <= 0) {
-	return rc == 0 ? -ENOTCONN : -errno;
-    }
-
-    LOG_HEXDUMP_DBG(header, sizeof(header), "h:>");
-    modbus_raw_get_header(&tmp_adu, header);
-    data_len = tmp_adu.length;
-
-    rc = recv(client, tmp_adu.data, data_len, MSG_WAITALL);
-    if (rc <= 0) {
-	return rc == 0 ? -ENOTCONN : -errno;
-    }
-
-    LOG_HEXDUMP_DBG(tmp_adu.data, tmp_adu.length, "d:>");
-    if (modbus_raw_submit_rx(server_iface, &tmp_adu)) {
-	LOG_ERR("Failed to submit raw ADU");
-	return -EIO;
-    }
-
-    if (k_sem_take(&received, K_MSEC(1000)) != 0) {
-	LOG_ERR("MODBUS RAW wait time expired");
-	modbus_raw_set_server_failure(&tmp_adu);
-    }
-
-    return modbus_tcp_reply(client, &tmp_adu);
-}
-
 void tcp_poll(void)
 {
-    int serv;
+    int serv, max_fd;
     struct sockaddr_in bind_addr;
+    struct timeval timeout;
     static int counter;
+    fd_set readfds;
 
     if (init_modbus_server()) {
 	LOG_ERR("Modbus TCP server initialization failed");
 	return;
     }
 
-
     serv = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
     if (serv < 0) {
 	LOG_ERR("error: socket: %d", errno);
 	return;
@@ -153,27 +109,112 @@ void tcp_poll(void)
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len = sizeof(client_addr);
 	char addr_str[INET_ADDRSTRLEN];
-	int client;
+	bool had_connect = false;
 	int rc;
 
-	client = accept(serv, (struct sockaddr *)&client_addr,
-		 &client_addr_len);
+	FD_ZERO(&readfds);
+	FD_SET(serv, &readfds);
+	max_fd = serv;
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (mb_clients[i].fd > 0) {
+                FD_SET(mb_clients[i].fd, &readfds);
+                had_connect = true;
+            }
+            if (mb_clients[i].fd > max_fd)
+                max_fd = mb_clients[i].fd;
+        }
 
-	if (client < 0) {
-	    LOG_ERR("error: accept: %d", errno);
-	    continue;
-	}
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
 
-	inet_ntop(client_addr.sin_family, &client_addr.sin_addr,
-	   addr_str, sizeof(addr_str));
-	LOG_INF("Connection #%d from %s", counter++, addr_str);
+        rc = select(max_fd + 1, &readfds, NULL, NULL, &timeout);
+        if ((rc < 0) && (errno != EINTR)) {
+            LOG_ERR("out of poll max fd");
+            k_msleep(100);
+            continue;
+        } else if (rc == 0) {
+            continue;
+        }
 
-	do {
-	    rc = modbus_tcp_connection(client);
-	} while (!rc);
+        if (FD_ISSET(serv, &readfds)) {
+	    int client = accept(serv, (struct sockaddr *)&client_addr, &client_addr_len);
 
-	close(client);
-	LOG_INF("Connection from %s closed, errno %d", addr_str, rc);
+	    if (client < 0) {
+	    	LOG_ERR("error: accept: %d", errno);
+	    	continue;
+	    }
+
+	    inet_ntop(client_addr.sin_family, &client_addr.sin_addr, addr_str, sizeof(addr_str));
+
+            for (int i = 0; i < MAX_CLIENTS; i++) {
+            	if (mb_clients[i].time && (mb_clients[i].time + 30000) < k_uptime_get()) {
+                    getpeername(mb_clients[i].fd, (struct sockaddr*)&client_addr, (socklen_t*)&client_addr_len);
+                    LOG_INF("Host(%s:%d) connection is terminated due to timeout", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    close(mb_clients[i].fd);
+                    had_connect = false;
+                    mb_clients[i].fd = 0;
+                    mb_clients[i].time = 0;
+            	}
+            }
+
+            if (had_connect) {
+            	LOG_WRN("Only allow one connection at same time, wait...");
+                close(client);
+                continue;
+            }
+
+            for (int i = 0; i < MAX_CLIENTS; i++) {
+            	if (mb_clients[i].fd == 0) {
+                    mb_clients[i].fd = client;
+		    mb_clients[i].time = k_uptime_get();
+		    LOG_INF("Host(%s:%d) connected, counts: %d", addr_str, ntohs(client_addr.sin_port), ++counter);
+                    LOG_INF("Adding to list of sockets as %d", i);
+                    break;
+                } else if (i == MAX_CLIENTS - 1)
+                    close(client);
+
+            }
+	} else {
+            for (int i = 0; i < MAX_CLIENTS; i++) {
+            	if (FD_ISSET(mb_clients[i].fd, &readfds)) {
+                    if ((rc = recv(mb_clients[i].fd, data_buf, MODBUS_MBAP_AND_FC_LENGTH, MSG_WAITALL) == 0)) {
+                    	getpeername(mb_clients[i].fd, (struct sockaddr*)&client_addr, (socklen_t*)&client_addr_len);
+			LOG_INF("Host(%s:%d) close connection", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    	close(mb_clients[i].fd);
+                    	mb_clients[i].fd = 0;
+                    	mb_clients[i].time = 0;
+                    } else {
+		    	int data_len;
+
+		    	mb_clients[i].time = k_uptime_get();
+		    	LOG_HEXDUMP_DBG(data_buf, MODBUS_MBAP_AND_FC_LENGTH, "h:>");
+		    	modbus_raw_get_header(&tmp_adu, data_buf);
+		    	data_len = tmp_adu.length;
+                        if ((rc = recv(mb_clients[i].fd, tmp_adu.data, tmp_adu.length, MSG_WAITALL) < 0)) {
+                            LOG_ERR("receive data error");
+                            break;
+                        }
+
+		    	LOG_HEXDUMP_DBG(tmp_adu.data, tmp_adu.length, "d:>");
+    			if (modbus_raw_submit_rx(server_iface, &tmp_adu)) {
+			    LOG_ERR("Failed to submit raw ADU");
+			    continue;
+    			}
+
+    			if (k_sem_take(&received, K_MSEC(1000)) != 0) {
+			    LOG_ERR("MODBUS RAW wait time expired");
+			    modbus_raw_set_server_failure(&tmp_adu);
+    			}
+		        modbus_raw_put_header(&tmp_adu, data_buf);
+    			memcpy(data_buf + MODBUS_MBAP_AND_FC_LENGTH, tmp_adu.data, tmp_adu.length);
+
+    			if (send(mb_clients[i].fd, data_buf, MODBUS_MBAP_AND_FC_LENGTH + tmp_adu.length, 0) < 0) {
+			    LOG_ERR("send error");
+    			}
+                    }
+                }
+            }
+        }
     }
 }
 
