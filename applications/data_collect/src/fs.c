@@ -7,7 +7,7 @@ LOG_MODULE_REGISTER(app_mount, LOG_LEVEL_INF);
 #include <ff.h>
 
 #ifdef CONFIG_FS_FATFS_HAS_RTC
-#include <time.h>
+#include <zephyr/posix/time.h>
 DWORD get_fattime(void)
 {
 	time_t unix_time = time(NULL);

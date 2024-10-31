@@ -1,7 +1,7 @@
 #include <init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
-#include <time.h>
+#include <zephyr/posix/time.h>
 
 #define USER_NODE DT_PATH(zephyr_user)
 

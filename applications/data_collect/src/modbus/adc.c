@@ -1,6 +1,6 @@
 #include <init.h>
 #include <zephyr/drivers/adc.h>
-#include <time.h>
+#include <zephyr/posix/time.h>
 
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 

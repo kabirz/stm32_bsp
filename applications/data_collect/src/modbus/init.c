@@ -1,6 +1,6 @@
 #include <init.h>
 #include <zephyr/kernel.h>
-#include <time.h>
+#include <zephyr/posix/time.h>
 #ifdef CONFIG_NETWORKING
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/net_if.h>
