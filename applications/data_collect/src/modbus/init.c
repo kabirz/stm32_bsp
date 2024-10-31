@@ -1,9 +1,11 @@
 #include <init.h>
 #include <zephyr/kernel.h>
 #include <time.h>
+#ifdef CONFIG_NETWORKING
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_l2.h>
+#endif
 #ifdef CONFIG_SETTINGS 
 #include <zephyr/settings/settings.h>
 #endif
@@ -28,7 +30,9 @@ static const uint16_t holding_regs[CONFIG_MODBUS_HOLDING_REGISTER_NUMBERS] = {
 int modbus_init(void)
 {
     struct in_addr addr, netmask;
+#ifdef CONFIG_NETWORKING
     struct net_if *iface;
+#endif
     uint32_t t = time(NULL);
 
     update_input_reg(INPUT_VER_IDX, 0x204);
@@ -44,6 +48,7 @@ int modbus_init(void)
 	settings_load();
 #endif
 
+#ifdef CONFIG_NETWORKING
     iface = net_if_get_first_by_type(&NET_L2_GET_NAME(ETHERNET));
     if (!iface) {
         LOG_ERR("No ethernet interfaces found.");
@@ -64,6 +69,8 @@ int modbus_init(void)
         LOG_ERR("Cannot add netmask to interface");
         return -1;
     }
+#endif
+
     return 0;
 }
 

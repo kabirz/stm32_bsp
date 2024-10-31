@@ -109,7 +109,6 @@ static void udp_poll(void)
     int serv;
     struct sockaddr_in bind_addr, client_addr;
     socklen_t client_addr_len;
-    struct ip_mreqn mreq;
     int buf_len;
 
     while (!net_if_is_admin_up(net_if_get_default())) {
@@ -119,13 +118,6 @@ static void udp_poll(void)
     if (serv < 0) {
     	LOG_ERR("udp socket create error");
     	return;
-    }
-
-    mreq.imr_multiaddr.s_addr = inet_addr(MULTICAST_GROUP);
-    mreq.imr_address.s_addr = INADDR_ANY;
-
-    if (setsockopt(serv, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
-    	LOG_WRN("failed to join multicast group, error: %d", errno);
     }
 
     bind_addr.sin_family = AF_INET;

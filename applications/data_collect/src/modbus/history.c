@@ -1,9 +1,7 @@
 #include <zephyr/kernel.h>
-#include <sys/stat.h>
-#include <sys/types.h>                                                                                                                                                           
-#include <dirent.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <zephyr/posix/dirent.h>
+#include <zephyr/posix/fcntl.h>
+#include <zephyr/posix/unistd.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(modbus_history, LOG_LEVEL_INF);
@@ -11,6 +9,8 @@ LOG_MODULE_REGISTER(modbus_history, LOG_LEVEL_INF);
 #define ROOT DT_PROP(DT_NODELABEL(lfs1), mount_point)
 #elif DT_NODE_EXISTS(DT_INST(0, zephyr_flash_disk))
 #define ROOT "/"DT_PROP(DT_INST(0, zephyr_flash_disk), disk_name)":"
+#else
+#error "Must enable filesystem"
 #endif
 #define MAX_FILE_SIZE (1024ul*1024ul)
 #define MAX_FILE_NUM  (10ul*1024ul*1024ul/MAX_FILE_SIZE)

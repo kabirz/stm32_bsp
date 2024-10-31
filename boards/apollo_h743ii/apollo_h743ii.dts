@@ -18,21 +18,6 @@
 		zephyr,settings-partition = &cfg_partition;
 	};
 
-	fstab: fstab {
-		compatible = "zephyr,fstab";
-		lfs1: lfs1 {
-			compatible = "zephyr,fstab,littlefs";
-			read-size = <1>;
-			prog-size = <16>;
-			cache-size = <256>;
-			lookahead-size = <32>;
-			block-cycles = <512>;
-			automount;
-			partition = <&storage_partition>;
-			mount-point = "/lfs1";
-		};
-	};
-
 	leds: leds {
 		compatible = "gpio-leds";
 		red_led: led_0 {
