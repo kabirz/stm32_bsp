@@ -16,6 +16,8 @@ CONFIG_UART_CONSOLE=y
 # Enable GPIO
 CONFIG_GPIO=y
 
+# adc
+CONFIG_ADC=y
 
 # Enable flash
 CONFIG_FLASH=y

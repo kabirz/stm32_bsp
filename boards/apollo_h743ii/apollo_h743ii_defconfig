@@ -15,6 +15,9 @@ CONFIG_FLASH=y
 # enable flash map
 CONFIG_FLASH_MAP=y
 
+# adc
+CONFIG_ADC=y
+
 # Console
 CONFIG_CONSOLE=y
 CONFIG_UART_CONSOLE=y

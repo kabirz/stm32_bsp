@@ -7,10 +7,12 @@
 LOG_MODULE_REGISTER(time, LOG_LEVEL_INF);
 static const struct device *rtc_dev = DEVICE_DT_GET(DT_NODELABEL(rtc));
 
+#ifdef CONFIG_LOG
 static log_timestamp_t sync_rtc_timestamp_get(void)
 {
     return (log_timestamp_t)time(NULL);
 }
+#endif
 
 void set_timestamp(time_t t)
 {
