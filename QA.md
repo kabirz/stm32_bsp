@@ -9,6 +9,8 @@
   CONFIG_NET_MAX_CONN: 设置最大的连接数量，根据需要修改
   CONFIG_ZVFS_POLL_MAX: 如果使用了select这样的操作这个值需要注意，很多的连接可能会导致奔溃。
 
+4. 使用ftp下载文件时发现网速奇慢无比，1M的文件下载需要1分多钟，后经过调整CONFIG_NET_BUF_DATA_SIZE为256后，5s就下载完成了，默认值时128. 调试了很久才解决。
+
 操作方法
 1. host设置固定ip
 ```shell
