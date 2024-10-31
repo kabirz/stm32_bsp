@@ -43,6 +43,11 @@ config MODBUS_HOLDING_REGISTER_NUMBERS
 	help
 	  Use this to set modbus holding register numbers
 
+config MB_FTP_SERVER 
+	bool "modbus ftp server"
+	select NET_CONTEXT_SNDTIMEO
+	help
+	  modbus ftp server
 endmenu
 
 module = MODBUS_APP

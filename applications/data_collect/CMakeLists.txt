@@ -23,3 +23,7 @@ target_sources_ifdef(CONFIG_RTC app PRIVATE src/time.c)
 target_sources_ifdef(CONFIG_SERIAL app PRIVATE src/modbus/rtu.c)
 target_sources_ifdef(CONFIG_ADC app PRIVATE src/modbus/adc.c)
 target_sources_ifdef(CONFIG_FILE_SYSTEM app PRIVATE src/fs.c)
+
+aux_source_directory(src/ftp FTP_SRC)
+target_sources_ifdef(CONFIG_MB_FTP_SERVER app PRIVATE ${FTP_SRC})
+target_compile_options(app PRIVATE -Wno-format-truncation)
