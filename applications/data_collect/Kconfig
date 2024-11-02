@@ -13,6 +13,12 @@ config MODBUS_RTU_PRIORITY
 	help
 	  Use this to set modbus rtu server priority
 
+config FW_UPGRADE_PRIORITY
+	int "firmware upgrade server priority"
+	default 13
+	help
+	  Use this to set firmware upgrade server priority
+
 config MODBUS_TCP_STACK_SIZE
 	int "modbus tcp server stack size"
 	default 1024
@@ -24,6 +30,12 @@ config MODBUS_RTU_STACK_SIZE
 	default 1024
 	help
 	  Use this to set modbus rtu server stack size
+
+config FW_UPGRADE_STACK_SIZE
+	int "firmware upgrade server stack size"
+	default 1024
+	help
+	  Use this to set firmware upgrade server stack size
 
 config MODBUS_COLS_REGISTER_NUMBERS
 	int "modbus cols register numbers"

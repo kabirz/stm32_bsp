@@ -13,13 +13,18 @@
 ```
 zephyr commit id is `829c03bcdca` in my code.
 
+### enable env
+
+```shell
+cd /path/stm32_bsp
+export BOARD_ROOT=`pwd`
+export DTS_ROOT=`pwd`
+```
+
 ### build for blue pill
 
 ```shell
-# stm32f103_bluepill/daq_f407vet6/moni_f407vet6
-    west build -b stm32f103_bluepill/daq_f407vet6/moni_f407vet6 ${ZEPHYR_BASE}/samples/basic/blinky -DBOARD_ROOT=`pwd`
-# apollo_f767ig 
-    west build -b apollo_f767ig ${ZEPHYR_BASE}/samples/basic/threads -DBOARD_ROOT=`pwd` -DDTS_ROOT=`pwd`
+    west build -b real_board ${ZEPHYR_BASE}/samples/basic/blinky
 ```
 
 ### flash
@@ -47,6 +52,7 @@ zephyr commit id is `829c03bcdca` in my code.
 #### 1. use west rtt(pyocd/openocd)
 
 ```shell
+    west build -S rtt-console -b real_bard /path/project
     west rtt -r pyocd/openocd
 ```
 
@@ -63,3 +69,11 @@ zephyr commit id is `829c03bcdca` in my code.
 ```shell
    pyocd rtt  -t STM32F103C8 -a ${RTT_BASE_ADDR}
 ```
+
+
+### sysbuild
+
+```shell
+  west build -b apollo_h743ii applications/data_collect --sysbuild
+```
+

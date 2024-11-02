@@ -16,6 +16,7 @@
 		zephyr,ccm = &ccm0;
 		zephyr,canbus = &can2;
 		zephyr,settings-partition = &cfg_partition;
+		zephyr,code-partition = &slot0_partition;
 	};
 	leds {
 		compatible = "gpio-leds";
@@ -128,6 +129,26 @@ zephyr_udc0: &usbotg_fs {
 	pinctrl-names = "default";
 	status = "okay";
 };
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x00000000 DT_SIZE_K(128)>;
+			read-only;
+		};
+
+		slot0_partition: partition@20000 {
+			label = "image-0";
+			reg = <0x00020000 DT_SIZE_K(384)>;
+		};
+	};
+};
+
 &spi1 {
 	pinctrl-0 = <&spi1_sck_pa5 &spi1_miso_pa6 &spi1_mosi_pa7>;
 	pinctrl-names = "default";
@@ -144,22 +165,21 @@ zephyr_udc0: &usbotg_fs {
 			#address-cells = <1>;
 			#size-cells = <1>;
 
-			boot_partition: partition@0 {
-				label = "bootloader";
-				reg = <0x00000000 DT_SIZE_M(1)>;
-			};
-
-			storage_partition: partition@100000 {
+			storage_partition: partition@0 {
 				label = "data";
-				reg = <0x00100000 DT_SIZE_M(12)>;
+				reg = <0x00000000 DT_SIZE_M(13)>;
 			};
-			app_partition: jartition@D00000 {
-				label = "app";
-				reg = <0x00D00000 DT_SIZE_M(2)>;
+			slot1_partition: partition@D00000 {
+				label = "image-1";
+				reg = <0x00D00000 DT_SIZE_K(384)>;
 			};
-			cfg_partition: partition@F00000 {
+			scratch_partition: partition@D60000 {
+				label = "image-scratch";
+				reg = <0x00D60000 DT_SIZE_K(384)>;
+			};
+			cfg_partition: partition@E00000 {
 				label = "cfg";
-				reg = <0x00F00000 DT_SIZE_M(1)>;
+				reg = <0x00E00000 DT_SIZE_M(2)>;
 			};
 		};
 	};

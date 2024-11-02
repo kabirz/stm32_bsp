@@ -2,6 +2,10 @@
 
 cmake_minimum_required(VERSION 3.20.0)
 
+set(SNIPPET
+  shell_en
+  littlefs_flash
+)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(data-collect)
 
@@ -23,6 +27,7 @@ target_sources_ifdef(CONFIG_RTC app PRIVATE src/time.c)
 target_sources_ifdef(CONFIG_DT_HAS_ZEPHYR_MODBUS_SERIAL_ENABLED app PRIVATE src/modbus/rtu.c)
 target_sources_ifdef(CONFIG_ADC app PRIVATE src/modbus/adc.c)
 target_sources_ifdef(CONFIG_FILE_SYSTEM app PRIVATE src/fs.c)
+target_sources_ifdef(CONFIG_BOOTLOADER_MCUBOOT app PRIVATE src/fw_upgrade.c)
 
 aux_source_directory(src/ftp FTP_SRC)
 target_sources_ifdef(CONFIG_MB_FTP_SERVER app PRIVATE ${FTP_SRC})
