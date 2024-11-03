@@ -151,4 +151,4 @@ static void ftp_poll(void)
     }
 }
 
-K_THREAD_DEFINE(ftp, 2048, ftp_poll, NULL, NULL, NULL, 20, 0, 0);
+K_THREAD_DEFINE(ftp, CONFIG_FTP_STACK_SIZE, ftp_poll, NULL, NULL, NULL, CONFIG_FTP_PRIORITY, 0, 0);

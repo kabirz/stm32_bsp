@@ -54,7 +54,7 @@ void di_process_handler(void)
     }
 }
 
-K_THREAD_DEFINE(di_process_id, CONFIG_MODBUS_TCP_STACK_SIZE, di_process_handler, NULL, NULL, NULL, 12, 0, 0);
+K_THREAD_DEFINE(di, CONFIG_MODBUS_DIO_STACK_SIZE, di_process_handler, NULL, NULL, NULL, CONFIG_MODBUS_DIO_PRIORITY, 0, 0);
 
 int dio_init(void)
 {

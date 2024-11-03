@@ -148,4 +148,4 @@ static void udp_poll(void)
     }
 }
 
-K_THREAD_DEFINE(udp_id, 2048, udp_poll, NULL, NULL, NULL, 20, 0, 0);
+K_THREAD_DEFINE(udp_bcast, CONFIG_UDP_STACK_SIZE, udp_poll, NULL, NULL, NULL, CONFIG_UDP_PRIORITY, 0, 0);

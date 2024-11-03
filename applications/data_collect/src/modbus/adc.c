@@ -87,4 +87,4 @@ int adc_handler(void)
     return 0;
 }
 
-K_THREAD_DEFINE(adc_id, 2048, adc_handler, NULL, NULL, NULL, CONFIG_MODBUS_TCP_PRIORITY, 0, 0);
+K_THREAD_DEFINE(adc_io, CONFIG_MODBUS_ADC_STACK_SIZE, adc_handler, NULL, NULL, NULL, CONFIG_MODBUS_ADC_PRIORITY, 0, 0);
