@@ -83,6 +83,13 @@ static void ftp_poll(void)
         if ((rc < 0) && (errno != EINTR)) {
             LOG_ERR("out of poll max fd");
             k_msleep(100);
+            for (int i = 0; i < MAX_CLIENTS; i++) {
+                if (ftp_sessions[i].time && (ftp_sessions[i].time + FTP_SESSION_TIMEOUT) < k_uptime_get()) {
+                    ftp_session_release(&ftp_sessions[i]);
+                    connect_num--;
+                }
+            }
+
             continue;
         } else if (rc == 0) {
             continue;
@@ -96,17 +103,8 @@ static void ftp_poll(void)
                 continue;
             }
 
-            for (int i = 0; i < MAX_CLIENTS; i++) {
-                if (ftp_sessions[i].time && (ftp_sessions[i].time + FTP_SESSION_TIMEOUT) < k_uptime_get()) {
-                    getpeername(ftp_sessions[i].fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
-                    LOG_INF("Host(%s:%d) connection is terminated due to timeout by others", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-                    ftp_session_release(&ftp_sessions[i]);
-                    connect_num--;
-                }
-            }
-
-            if (connect_num > 3) {
-                LOG_WRN("Allow 3 connections at same time, wait...");
+            if (connect_num > 2) {
+                LOG_WRN("Allow 2 connections at same time, wait...");
                 if (send(client, CONNECT_ERR_MSG, strlen(CONNECT_ERR_MSG), 0) < 0)
                     LOG_ERR("send error");
                 close(client);
