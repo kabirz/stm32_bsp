@@ -1,5 +1,6 @@
 #include <init.h>
 #include <zephyr/kernel.h>
+#include <zephyr/app_version.h>
 #include <zephyr/posix/time.h>
 #ifdef CONFIG_NETWORKING
 #include <zephyr/net/net_ip.h>
@@ -35,7 +36,7 @@ int modbus_init(void)
 #endif
     uint32_t t = time(NULL);
 
-    update_input_reg(INPUT_VER_IDX, 0x204);
+    update_input_reg(INPUT_VER_IDX, APP_VERSION_MAJOR << 8 | APP_VERSION_MINOR);
     for (size_t i = 0; i < ARRAY_SIZE(holding_regs); i++) {
         if (holding_regs[i])
             update_holding_reg(i, holding_regs[i]);
