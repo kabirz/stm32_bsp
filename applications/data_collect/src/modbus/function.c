@@ -87,21 +87,20 @@ static int holding_reg_wr(uint16_t addr, uint16_t reg)
 	if (addr >= ARRAY_SIZE(holding_reg)) {
 		return -ENOTSUP;
 	}
+
+	holding_reg[addr] = reg;
 	switch (addr) {
 	case HOLDING_DO_IDX:
 		reg = reg & 0xff;
 		mb_set_do(reg);
 		break;
 	case HOLDING_HIS_SAVE_IDX:
-		/* TODO */
-		break;
-	case HOLDING_IP_ADDR_1_IDX:
-	case HOLDING_IP_ADDR_2_IDX:
-	case HOLDING_IP_ADDR_3_IDX:
-	case HOLDING_IP_ADDR_4_IDX:
+		history_enable_write(!!reg);
 		break;
 	case HOLDING_TIMESTAMPH_IDX:
 	case HOLDING_TIMESTAMPL_IDX:
+		uint32_t val = (uint32_t)(holding_reg[HOLDING_TIMESTAMPH_IDX]) << 16 | holding_reg[HOLDING_TIMESTAMPL_IDX];
+		set_timestamp((time_t)val);
 		break;
 	case HOLDING_CFG_SAVE_IDX:
 #ifdef CONFIG_SETTINGS
@@ -114,8 +113,6 @@ static int holding_reg_wr(uint16_t addr, uint16_t reg)
 	default:
 		break;
 	}
-	
-	holding_reg[addr] = reg;
 
 	LOG_DBG("Holding register write, addr %u", addr);
 

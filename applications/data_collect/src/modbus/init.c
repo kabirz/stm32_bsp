@@ -48,6 +48,7 @@ int modbus_init(void)
 #ifdef CONFIG_SETTINGS 
 	settings_load();
 #endif
+    history_enable_write(!!get_holding_reg(HOLDING_HIS_SAVE_IDX));
 
 #ifdef CONFIG_NETWORKING
     iface = net_if_get_first_by_type(&NET_L2_GET_NAME(ETHERNET));

@@ -13,6 +13,13 @@
 ```
 zephyr commit id is `829c03bcdca` in my code.
 
+#### west config
+for compile commands
+
+```shell
+west config --global build.cmake-args -- "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+```
+
 ### enable env
 
 ```shell

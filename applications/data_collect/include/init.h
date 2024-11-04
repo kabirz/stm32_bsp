@@ -63,6 +63,8 @@ int update_holding_reg(uint16_t addr, uint16_t reg);
 uint16_t get_holding_reg(uint16_t addr);
 uint16_t get_input_reg(size_t index);
 int write_history_data(void *data, size_t size);
+void history_enable_write(bool enable);
+void set_timestamp(time_t t);
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(modbus_main, CONFIG_MODBUS_APP_LOG_LEVEL);

@@ -16,6 +16,7 @@ LOG_MODULE_REGISTER(modbus_history, LOG_LEVEL_INF);
 #define MAX_FILE_NUM  (10ul*1024ul*1024ul/MAX_FILE_SIZE)
 static int fd = -1;
 static int fd_offset;
+static bool enable_write;
 
 static K_MUTEX_DEFINE(h_lock);
 /*
@@ -113,6 +114,7 @@ int write_history_data(void *data, size_t size)
     bool create = false;
 
     k_mutex_lock(&h_lock, K_FOREVER);
+    if (!enable_write) return -1;
     if ((fd_offset + size) > MAX_FILE_SIZE) {
         close(fd);
         fd = -1;
@@ -140,5 +142,18 @@ int write_history_data(void *data, size_t size)
     k_mutex_unlock(&h_lock);
 
     return 0;
+}
+
+void history_enable_write(bool enable)
+{
+    k_mutex_lock(&h_lock, K_FOREVER);
+    if (!enable) {
+        if (fd >= 0) {
+            close(fd); 
+            fd = -1;
+        }
+    }
+    enable_write = enable;
+    k_mutex_unlock(&h_lock);
 }
 
