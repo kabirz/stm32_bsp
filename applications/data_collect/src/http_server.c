@@ -13,28 +13,17 @@
 #include <zephyr/data/json.h>
 #include <zephyr/sys/util_macro.h>
 #include <zephyr/posix/time.h>
+#include <zephyr/app_version.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(net_http_server_app, LOG_LEVEL_INF);
 
-struct led_command {
-	int led_num;
-	bool led_state;
-};
-
-static const struct json_obj_descr led_command_descr[] = {
-	JSON_OBJ_DESCR_PRIM(struct led_command, led_num, JSON_TOK_NUMBER),
-	JSON_OBJ_DESCR_PRIM(struct led_command, led_state, JSON_TOK_TRUE),
-};
-
-static const struct device *leds_dev = DEVICE_DT_GET_ANY(gpio_leds);
+static uint8_t http_buf[2048];
 
 static const uint8_t index_html_gz[] = {
 #include "index.html.gz.inc"
-};
-
-static const uint8_t main_js_gz[] = {
-#include "main.js.gz.inc"
 };
 
 static struct http_resource_detail_static index_html_gz_resource_detail = {
@@ -48,82 +37,117 @@ static struct http_resource_detail_static index_html_gz_resource_detail = {
 	.static_data_len = sizeof(index_html_gz),
 };
 
-static struct http_resource_detail_static main_js_gz_resource_detail = {
-	.common = {
-			.type = HTTP_RESOURCE_TYPE_STATIC,
-			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
-			.content_encoding = "gzip",
-			.content_type = "text/javascript",
-		},
-	.static_data = main_js_gz,
-	.static_data_len = sizeof(main_js_gz),
-};
-
-static int echo_handler(struct http_client_ctx *client, enum http_data_status status,
+#define SLOT1_PARTITION		slot1_partition
+#define SLOT1_PARTITION_ID	FIXED_PARTITION_ID(SLOT1_PARTITION)
+#define SLOT1_PARTITION_DEV	FIXED_PARTITION_DEVICE(SLOT1_PARTITION)
+#define SLOT1_PARTITION_NODE	DT_NODELABEL(SLOT1_PARTITION)
+static struct fw_data {
+	bool found;
+	bool had_first;
+	uint8_t first_line[64];
+	size_t offset;
+	const struct flash_area *fa;
+} fw_d;
+#define FLASH_SUCCESS "{\"status\": \"success\"}\r\n"
+#define FLASH_FAILED "{\"status\": \"failed\"}\r\n"
+static int fw_upgrade_handler(struct http_client_ctx *client, enum http_data_status status,
 			uint8_t *buffer, size_t len, struct http_response_ctx *response_ctx,
 			void *user_data)
 {
-#define MAX_TEMP_PRINT_LEN 32
-	static char print_str[MAX_TEMP_PRINT_LEN];
-	enum http_method method = client->method;
-	static size_t processed;
+	struct fw_data *f_data = user_data;
 
 	__ASSERT_NO_MSG(buffer != NULL);
 
 	if (status == HTTP_SERVER_DATA_ABORTED) {
-		LOG_DBG("Transaction aborted after %zd bytes.", processed);
-		processed = 0;
+		LOG_DBG("Transaction aborted after %zd bytes.", f_data->offset);
+		memset(f_data, 0, sizeof(struct fw_data));
 		return 0;
 	}
-
-	processed += len;
-
-	snprintf(print_str, sizeof(print_str), "%s received (%zd bytes)",
-		 http_method_str(method), len);
-	LOG_HEXDUMP_DBG(buffer, len, print_str);
-
-	if (status == HTTP_SERVER_DATA_FINAL) {
-		LOG_DBG("All data received (%zd bytes).", processed);
-		processed = 0;
+	if (!f_data->found) {
+		uint8_t *data;
+		if ((!f_data->had_first) && strstr(buffer, "\r\n")) {
+			buffer[len] = '\0';
+			memcpy(f_data->first_line, buffer, MIN((uint8_t *)strstr(buffer, "\r\n") - buffer, sizeof(f_data->first_line)));
+			f_data->had_first = true;
+		}
+		data = strstr(buffer, "\r\n\r\n");
+		if (data) {
+			data += 4;
+			if (flash_area_open(SLOT1_PARTITION_ID, &f_data->fa)) {
+				LOG_ERR("flash area open failed");
+				return -1;
+			}
+			flash_area_erase(f_data->fa, 0, f_data->fa->fa_size);
+			LOG_INF("starting upgrade firmware, size: %d", f_data->fa->fa_size);
+			if (flash_area_write(f_data->fa, f_data->offset, data, len - (data - buffer))) {
+				LOG_ERR("flash area write failed");
+				return -1;
+			}
+			f_data->found = true;
+			f_data->offset = len - (data - buffer);
+		}
+	} else {
+		int _len = f_data->offset + len - f_data->fa->fa_size;
+		if (_len > 0) {
+			uint8_t *off = (uint8_t *)strstr(buffer + len - _len, f_data->first_line);
+			if (off)
+				len = off - buffer - 2;
+			else
+				LOG_ERR("file not right");
+		}
+		if (flash_area_write(f_data->fa, f_data->offset, buffer, len)) {
+			LOG_ERR("flash area write failed");
+			return -1;
+		}
+		f_data->offset += len;
 	}
-
-	/* Echo data back to client */
-	response_ctx->body = buffer;
-	response_ctx->body_len = len;
-	response_ctx->final_chunk = (status == HTTP_SERVER_DATA_FINAL);
+	if (status == HTTP_SERVER_DATA_FINAL) {
+		if (f_data->offset != f_data->fa->fa_size) {
+			LOG_ERR("write error, %x, %x", f_data->offset, f_data->fa->fa_size);
+			response_ctx->body = FLASH_FAILED;
+			response_ctx->body_len = strlen(FLASH_FAILED);
+			response_ctx->status = HTTP_400_BAD_REQUEST;
+		} else {
+			LOG_INF("write finished, total size: %d", f_data->offset);
+			response_ctx->body = FLASH_SUCCESS;
+			response_ctx->body_len = strlen(FLASH_SUCCESS);
+			extern void set_reboot_status(bool val);
+			set_reboot_status(true);
+		}
+		response_ctx->final_chunk = (status == HTTP_SERVER_DATA_FINAL);
+		memset(f_data, 0, sizeof(struct fw_data));
+	}
 
 	return 0;
 }
 
-static struct http_resource_detail_dynamic echo_resource_detail = {
+static struct http_resource_detail_dynamic fw_upgrade_resource_detail = {
 	.common = {
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
 			.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
+			.content_type = "application/json",
 		},
-	.cb = echo_handler,
-	.user_data = NULL,
+	.cb = fw_upgrade_handler,
+	.user_data = &fw_d,
 };
 
-static int uptime_handler(struct http_client_ctx *client, enum http_data_status status,
+static int get_version_handler(struct http_client_ctx *client, enum http_data_status status,
 			  uint8_t *buffer, size_t len, struct http_response_ctx *response_ctx,
 			  void *user_data)
 {
 	int ret;
-	static uint8_t uptime_buf[sizeof(STRINGIFY(INT64_MAX))];
+	static uint8_t ver_buf[64];
 
-	LOG_DBG("Uptime handler status %d", status);
 
-	/* A payload is not expected with the GET request. Ignore any data and wait until
-	 * final callback before sending response
-	 */
 	if (status == HTTP_SERVER_DATA_FINAL) {
-		ret = snprintf(uptime_buf, sizeof(uptime_buf), "%" PRId64, time(NULL)*1000);
+		ret = snprintf(ver_buf, sizeof(ver_buf), "build time: %s-%s, version: %s",
+				__DATE__, __TIME__, APP_VERSION_TWEAK_STRING);
 		if (ret < 0) {
 			LOG_ERR("Failed to snprintf uptime, err %d", ret);
 			return ret;
 		}
 
-		response_ctx->body = uptime_buf;
+		response_ctx->body = ver_buf;
 		response_ctx->body_len = ret;
 		response_ctx->final_chunk = true;
 	}
@@ -131,96 +155,107 @@ static int uptime_handler(struct http_client_ctx *client, enum http_data_status 
 	return 0;
 }
 
-static struct http_resource_detail_dynamic uptime_resource_detail = {
+static struct http_resource_detail_dynamic get_version_resource_detail = {
 	.common = {
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
 			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
 		},
-	.cb = uptime_handler,
+	.cb = get_version_handler,
 	.user_data = NULL,
 };
 
-static void parse_led_post(uint8_t *buf, size_t len)
-{
-	int ret;
-	struct led_command cmd;
-	const int expected_return_code = BIT_MASK(ARRAY_SIZE(led_command_descr));
+#if defined(CONFIG_FILE_SYSTEM)
+#if DT_NODE_EXISTS(DT_NODELABEL(lfs1))
+#define ROOT DT_PROP(DT_NODELABEL(lfs1), mount_point)
+#elif DT_NODE_EXISTS(DT_INST(0, zephyr_flash_disk))
+#define ROOT "/"DT_PROP(DT_INST(0, zephyr_flash_disk), disk_name)":"
+#else
+#error "Must enable filesystem"
+#endif
 
-	ret = json_obj_parse(buf, len, led_command_descr, ARRAY_SIZE(led_command_descr), &cmd);
-	if (ret != expected_return_code) {
-		LOG_WRN("Failed to fully parse JSON payload, ret=%d", ret);
-		return;
-	}
+static struct http_resource_detail_static_fs fs_resource_detail = {
+	.common = {
+			.type = HTTP_RESOURCE_TYPE_STATIC_FS,
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+		},
+	.fs_path = "",
+};
 
-	LOG_INF("POST request setting LED %d to state %d", cmd.led_num, cmd.led_state);
+#include <zephyr/posix/dirent.h>
+#include <zephyr/posix/fcntl.h>
+#include <zephyr/posix/unistd.h>
 
-	if (leds_dev != NULL) {
-		if (cmd.led_state) {
-			led_on(leds_dev, cmd.led_num);
-		} else {
-			led_off(leds_dev, cmd.led_num);
-		}
-	}
-}
-
-static int led_handler(struct http_client_ctx *client, enum http_data_status status,
+static int files_handler(struct http_client_ctx *client, enum http_data_status status,
 		       uint8_t *buffer, size_t len, struct http_response_ctx *response_ctx,
 		       void *user_data)
 {
-	static uint8_t post_payload_buf[32];
-	static size_t cursor;
+	uint8_t buf[128];
 
-	LOG_DBG("LED handler status %d, size %zu", status, len);
+	LOG_DBG("Uptime handler status %d", status);
 
-	if (status == HTTP_SERVER_DATA_ABORTED) {
-		cursor = 0;
+	/* A payload is not expected with the GET request. Ignore any data and wait until
+	 * final callback before sending response
+	 */
+	if (status == HTTP_SERVER_DATA_FINAL) {
+		DIR *dir;
+		struct stat st;
+		struct dirent *ptr;
+		int offset = 0;
+
+		offset += snprintf(http_buf, 2048, "[ ");
+		dir = opendir(ROOT);
+		if (dir == NULL) {
+			LOG_ERR("ROOT is not found");
+			goto end_opendir;
+		}
+
+		while ((ptr = readdir(dir)) != NULL) {
+			if (snprintf(buf, 128, ROOT "/%s", ptr->d_name) < 0)
+				continue;
+			if (stat(buf, &st) == 0) {
+				if (!S_ISREG(st.st_mode))
+					continue;
+				offset += snprintf(http_buf + offset, 2048 - offset, "{\"name\": \"%s\", \"size\": %ld},", buf, st.st_size);
+			}
+		}
+	end_opendir:
+		http_buf[offset - 1] = ']';
+		closedir(dir);
+
+		response_ctx->body = http_buf;
+		response_ctx->body_len = offset;
+		response_ctx->final_chunk = true;
 		return 0;
 	}
-
-	if (len + cursor > sizeof(post_payload_buf)) {
-		cursor = 0;
-		return -ENOMEM;
-	}
-
-	/* Copy payload to our buffer. Note that even for a small payload, it may arrive split into
-	 * chunks (e.g. if the header size was such that the whole HTTP request exceeds the size of
-	 * the client buffer).
-	 */
-	memcpy(post_payload_buf + cursor, buffer, len);
-	cursor += len;
-
-	if (status == HTTP_SERVER_DATA_FINAL) {
-		parse_led_post(post_payload_buf, cursor);
-		cursor = 0;
-	}
-
+	response_ctx->body = NULL;
+	response_ctx->body_len = 0;
+	response_ctx->final_chunk = false;
 	return 0;
 }
 
-static struct http_resource_detail_dynamic led_resource_detail = {
+static struct http_resource_detail_dynamic filelists_resource_detail = {
 	.common = {
 			.type = HTTP_RESOURCE_TYPE_DYNAMIC,
-			.bitmask_of_supported_http_methods = BIT(HTTP_POST),
+			.bitmask_of_supported_http_methods = BIT(HTTP_GET),
+			.content_type = "application/json",
 		},
-	.cb = led_handler,
+	.cb = files_handler,
 	.user_data = NULL,
 };
+#endif
 
 static uint16_t test_http_service_port = 80;
-HTTP_SERVICE_DEFINE(test_http_service, NULL, &test_http_service_port, 1,
-		    10, NULL);
+HTTP_SERVICE_DEFINE(test_http_service, NULL, &test_http_service_port, 1, 10, NULL);
 
-HTTP_RESOURCE_DEFINE(index_html_gz_resource, test_http_service, "/",
-		     &index_html_gz_resource_detail);
+HTTP_RESOURCE_DEFINE(index_html_gz_resource, test_http_service, "/", &index_html_gz_resource_detail);
+HTTP_RESOURCE_DEFINE(fw_resource, test_http_service, "/fw_upgrade", &fw_upgrade_resource_detail);
+HTTP_RESOURCE_DEFINE(uptime_resource, test_http_service, "/version", &get_version_resource_detail);
 
-HTTP_RESOURCE_DEFINE(main_js_gz_resource, test_http_service, "/main.js",
-		     &main_js_gz_resource_detail);
-
-HTTP_RESOURCE_DEFINE(echo_resource, test_http_service, "/dynamic", &echo_resource_detail);
-
-HTTP_RESOURCE_DEFINE(uptime_resource, test_http_service, "/uptime", &uptime_resource_detail);
-
-HTTP_RESOURCE_DEFINE(led_resource, test_http_service, "/led", &led_resource_detail);
+#if defined(CONFIG_FILE_SYSTEM)
+HTTP_SERVER_CONTENT_TYPE(raw, "application/octet-stream");
+HTTP_RESOURCE_DEFINE(fs_resource, test_http_service, ROOT"/*", &fs_resource_detail);
+HTTP_RESOURCE_DEFINE(file_resource, test_http_service, "/filelists", &filelists_resource_detail);
+#endif
 
 int init_http_server(void)
 {

@@ -1,5 +1,4 @@
 #include <zephyr/kernel.h>
-#include <zephyr/sys/reboot.h>
 #include <zephyr/posix/sys/select.h>
 #include <zephyr/net/socket.h>
 #include <zephyr/drivers/flash.h>
@@ -10,7 +9,6 @@
 #define SLOT1_PARTITION_DEV	FIXED_PARTITION_DEVICE(SLOT1_PARTITION)
 #define SLOT1_PARTITION_NODE	DT_NODELABEL(SLOT1_PARTITION)
 #define TCP_PORT 20001
-#include <zephyr/logging/log_ctrl.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(fw_boot, LOG_LEVEL_INF);
 
@@ -98,10 +96,8 @@ void fw_upgrade(void)
 
         close(client);
         if (upgrade_finished) {
-            LOG_INF("rebooting...");
-            while (log_process() == true);
-            k_msleep(300);
-		    sys_reboot(SYS_REBOOT_COLD);
+            extern void set_reboot_status(bool val);
+            set_reboot_status(true);
         }
 
     }

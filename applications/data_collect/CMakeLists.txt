@@ -31,7 +31,7 @@ target_sources_ifdef(CONFIG_BOOTLOADER_MCUBOOT app PRIVATE src/fw_upgrade.c)
 
 aux_source_directory(src/ftp FTP_SRC)
 target_sources_ifdef(CONFIG_MB_FTP_SERVER app PRIVATE ${FTP_SRC})
-target_compile_options(app PRIVATE -Wno-format-truncation)
+target_compile_option_ifdef(CONFIG_MB_FTP_SERVER app PRIVATE -Wno-format-truncation)
 
 if(CONFIG_HTTP_SERVER)
 
@@ -45,7 +45,7 @@ target_sources(app PRIVATE src/http_server.c)
 
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
 
-foreach(web_resource index.html main.js)
+foreach(web_resource index.html)
   generate_inc_file_for_target(
     app
     resources/${web_resource}
