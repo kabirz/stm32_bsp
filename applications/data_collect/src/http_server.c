@@ -75,11 +75,13 @@ static int fw_upgrade_handler(struct http_client_ctx *client, enum http_data_sta
 			data += 4;
 			if (flash_area_open(SLOT1_PARTITION_ID, &f_data->fa)) {
 				LOG_ERR("flash area open failed");
+				memset(f_data, 0, sizeof(struct fw_data));
 				return -1;
 			}
 			flash_area_erase(f_data->fa, 0, f_data->fa->fa_size);
 			LOG_INF("starting upgrade firmware, size: %d", f_data->fa->fa_size);
 			if (flash_area_write(f_data->fa, f_data->offset, data, len - (data - buffer))) {
+				memset(f_data, 0, sizeof(struct fw_data));
 				LOG_ERR("flash area write failed");
 				return -1;
 			}
@@ -97,6 +99,7 @@ static int fw_upgrade_handler(struct http_client_ctx *client, enum http_data_sta
 		}
 		if (flash_area_write(f_data->fa, f_data->offset, buffer, len)) {
 			LOG_ERR("flash area write failed");
+			memset(f_data, 0, sizeof(struct fw_data));
 			return -1;
 		}
 		f_data->offset += len;
