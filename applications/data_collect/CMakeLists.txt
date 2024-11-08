@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.20.0)
 set(SNIPPET
   shell_en
   littlefs_flash
+  imgmgr
 )
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(data-collect)
@@ -34,25 +35,23 @@ target_sources_ifdef(CONFIG_MB_FTP_SERVER app PRIVATE ${FTP_SRC})
 target_compile_option_ifdef(CONFIG_MB_FTP_SERVER app PRIVATE -Wno-format-truncation)
 
 if(CONFIG_HTTP_SERVER)
-
-zephyr_linker_sources(SECTIONS sections-rom.ld)
-zephyr_linker_section(NAME
-				http_resource_desc_test_http_service
-				KVMA RAM_REGION GROUP RODATA_REGION
-				SUBALIGN ${CONFIG_LINKER_ITERABLE_SUBALIGN})
-
-target_sources(app PRIVATE src/http_server.c)
-
-set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
-
-foreach(web_resource index.html)
-  generate_inc_file_for_target(
-    app
-    resources/${web_resource}
-    ${gen_dir}/${web_resource}.gz.inc
-    --gzip
-  )
-endforeach()
-
+  zephyr_linker_sources(SECTIONS sections-rom.ld)
+  zephyr_linker_section(NAME
+  				http_resource_desc_test_http_service
+  				KVMA RAM_REGION GROUP RODATA_REGION
+  				SUBALIGN ${CONFIG_LINKER_ITERABLE_SUBALIGN})
+  
+  target_sources(app PRIVATE src/http_server.c)
+  
+  set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
+  
+  foreach(web_resource index.html)
+    generate_inc_file_for_target(
+      app
+      resources/${web_resource}
+      ${gen_dir}/${web_resource}.gz.inc
+      --gzip
+    )
+  endforeach()
 endif()
 

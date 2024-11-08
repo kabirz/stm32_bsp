@@ -162,6 +162,55 @@ struct modbus_user_callbacks mbs_cbs = {
 #ifdef CONFIG_SETTINGS 
 #include <zephyr/settings/settings.h>
 
+int mb_handle_get(const char *name, char *val, int val_len_max)
+{
+    const char *next;
+    size_t name_len, offset;
+
+    name_len = settings_name_next(name, &next);
+
+    if (!next) {
+	if (!strncmp(name, "history", name_len))
+	    memcpy(val, holding_reg + HOLDING_HIS_SAVE_IDX, val_len_max);
+	else if (!strncmp(name, "rs485_bps", name_len))
+	    memcpy(val, holding_reg + HOLDING_RS485_BPS_IDX, val_len_max);
+	else if (!strncmp(name, "slave_id", name_len))
+	    memcpy(val, holding_reg + HOLDING_SLAVE_ID_IDX, val_len_max);
+	else if (!strncmp(name, "ip", name_len))
+	    memcpy(val, holding_reg + HOLDING_IP_ADDR_1_IDX, val_len_max);
+    } else if (!strncmp(name, "ai", name_len)) {
+    	offset = name_len + 1;
+	name_len = settings_name_next(name+offset, &next);
+    	if (!next) {
+	    if (!strncmp(name+offset, "enable", name_len))
+	    	memcpy(val, holding_reg + HOLDING_AI_EN_IDX, val_len_max);
+	    else if (!strncmp(name+offset, "time", name_len))
+	    	memcpy(val, holding_reg + HOLDING_AI_SI_IDX, val_len_max);
+	}
+    } else if (!strncmp(name, "di", name_len)) {
+    	offset = name_len + 1;
+	name_len = settings_name_next(name+offset, &next);
+    	if (!next) {
+	    if (!strncmp(name+offset, "enable", name_len))
+	    	memcpy(val, holding_reg + HOLDING_DI_EN_IDX, val_len_max);
+	    else if (!strncmp(name+offset, "time", name_len))
+	    	memcpy(val, holding_reg + HOLDING_DI_SI_IDX, val_len_max);
+	}
+    } else if (!strncmp(name, "can", name_len)) {
+    	offset = name_len + 1;
+	name_len = settings_name_next(name+offset, &next);
+    	if (!next) {
+	    if (!strncmp(name+offset, "id", name_len))
+	    	memcpy(val, holding_reg + HOLDING_CAN_ID_IDX, val_len_max);
+	    else if (!strncmp(name+offset, "bps", name_len))
+	    	memcpy(val, holding_reg + HOLDING_CAN_BPS_IDX, val_len_max);
+	}
+    } else 
+	return -ENOENT;
+
+    return 0;
+}
+
 int mb_handle_set(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg)
 {
     const char *next;
@@ -232,7 +281,7 @@ int mb_handle_set(const char *name, size_t len, settings_read_cb read_cb, void *
 	    } else if (!strncmp(name+offset, "bps", name_len)) {
 	    	rc = read_cb(cb_arg, holding_reg + HOLDING_CAN_BPS_IDX, sizeof(uint16_t));
 	    	LOG_INF("<modbus/can/bps> = %d", holding_reg[HOLDING_CAN_BPS_IDX]);
-	    	return 0;
+		return 0;
 	    }
 	}
     }
@@ -257,7 +306,7 @@ int mb_handle_export(int (*cb)(const char *name, const void *value, size_t val_l
     return 0;
 }
 
-SETTINGS_STATIC_HANDLER_DEFINE(modbus, "modbus", NULL, mb_handle_set, NULL, mb_handle_export);
+SETTINGS_STATIC_HANDLER_DEFINE(modbus, "modbus", mb_handle_get, mb_handle_set, NULL, mb_handle_export);
 
 static int main_settings_init(void)
 {

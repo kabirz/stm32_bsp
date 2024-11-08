@@ -17,6 +17,7 @@
 		zephyr,canbus = &fdcan1;
 		zephyr,settings-partition = &cfg_partition;
 		zephyr,code-partition = &slot0_partition;
+		zephyr,rtc = &rtc;
 	};
 
 	leds: leds {
@@ -57,6 +58,7 @@
 		die-temp0 = &die_temp;
 		volt-sensor0 = &vref;
 		volt-sensor1 = &vbat;
+		rtc = &rtc;
 	};
 
 	zephyr,user {

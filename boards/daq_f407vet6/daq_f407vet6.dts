@@ -17,6 +17,7 @@
 		zephyr,canbus = &can2;
 		zephyr,settings-partition = &cfg_partition;
 		zephyr,code-partition = &slot0_partition;
+		zephyr,rtc = &rtc;
 	};
 	leds {
 		compatible = "gpio-leds";
@@ -53,6 +54,7 @@
 		led0 = &green_led_1;
 		led1 = &green_led_2;
 		sw0 = &user_button_UP;
+		rtc = &rtc;
 	};
 };
 
