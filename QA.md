@@ -28,11 +28,13 @@ route -p add 224.0.0.1 mask 255.255.255.255 192.168.12.12
 ```
 
 3. 查看路由表(双网卡，其中一个连外网，另一个连开发板)
+```shell
 ❯  ip route show
 default via 192.168.10.1 dev eno1 proto dhcp src 192.168.10.12 metric 20101
 192.168.10.0/24 dev eno1 proto kernel scope link src 192.168.10.12 metric 101
 192.168.12.0/24 dev enp1s0 proto kernel scope link src 192.168.12.12
 224.0.0.1 dev enp1s0 scope link
+```
 
 
 
